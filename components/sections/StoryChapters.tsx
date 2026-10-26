@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import dynamic from 'next/dynamic';
 import { setStageDirection, type StageBeat } from '@/components/three/CameraRig';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { CINEMATIC, fallbackChain } from '@/lib/assets';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -25,8 +26,8 @@ const ScrollExpand = dynamic(() => import('@/components/reactbits/ScrollExpand/S
    The picture.
    ------------------------------------------------------------------------- */
 
-const GOLD_TEXTURE = '/cinematic/gold-texture.webp';
-const ATELIER_HANDS = '/cinematic/atelier-hands.webp';
+const GOLD_TEXTURE = CINEMATIC.goldTexture;
+const ATELIER_HANDS = CINEMATIC.atelierHands;
 
 type Chapter = {
   beat: StageBeat;
@@ -50,7 +51,7 @@ const CHAPTERS: Chapter[] = [
     body: 'Every stone is chosen by hand, under north light.',
     from: 0,
     to: 0.3,
-    still: '/cinematic/chapter-stone.jpg',
+    still: CINEMATIC.chapterStone,
   },
   {
     beat: 'fire',
@@ -60,7 +61,7 @@ const CHAPTERS: Chapter[] = [
     body: 'Gold is worked at the temperature where it remembers.',
     from: 0.3,
     to: 0.55,
-    still: '/cinematic/chapter-light.jpg',
+    still: CINEMATIC.chapterLight,
   },
   {
     beat: 'hand',
@@ -70,7 +71,7 @@ const CHAPTERS: Chapter[] = [
     body: 'A pattern cut by hand, then worn smooth by a lifetime.',
     from: 0.75,
     to: 1,
-    still: '/cinematic/chapter-hand.jpg',
+    still: CINEMATIC.chapterHand,
   },
 ];
 
@@ -82,7 +83,7 @@ const INTERLUDE: Chapter = {
   body: 'Forty hours. One ring.',
   from: 0.55,
   to: 0.75,
-  still: '/cinematic/chapter-hand.jpg',
+  still: CINEMATIC.chapterHand,
 };
 
 const RAIL = [
@@ -96,25 +97,57 @@ const RAIL = [
    Assets.
    ------------------------------------------------------------------------- */
 
+const probe = (src: string): Promise<boolean> =>
+  fetch(src, { method: 'HEAD' })
+    .then((response) => response.ok)
+    .catch(() => false);
+
 /** Probe a path once. Missing art must never break the layout or hide type. */
 function useAssetReady(src: string): boolean {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(src, { method: 'HEAD' })
-      .then((response) => {
-        if (!cancelled) setReady(response.ok);
-      })
-      .catch(() => {
-        if (!cancelled) setReady(false);
-      });
+    probe(src).then((ok) => {
+      if (!cancelled) setReady(ok);
+    });
     return () => {
       cancelled = true;
     };
   }, [src]);
 
   return ready;
+}
+
+/**
+ * Walk a fallback chain until something exists.
+ * `undefined` = still checking, `null` = nothing on disk, caller draws a plate.
+ */
+function useResolvedImage(primary: string): string | null | undefined {
+  const [resolved, setResolved] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const run = async () => {
+      for (const candidate of fallbackChain(primary)) {
+        const ok = await probe(candidate);
+        if (cancelled) return;
+        if (ok) {
+          setResolved(candidate);
+          return;
+        }
+      }
+      if (!cancelled) setResolved(null);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [primary]);
+
+  return resolved;
 }
 
 /* -------------------------------------------------------------------------
@@ -228,25 +261,27 @@ function ChapterHeadline({ text, goldReady }: { text: string; goldReady: boolean
           goldReady ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <MaskedHeading
-          text={text}
-          tag="h2"
-          src={GOLD_TEXTURE}
-          weight={300}
-          tracking={-0.02}
-          lineHeight={0.92}
-          textScale={0.14}
-          fillScale={1.1}
-          parallax={18}
-          brightness={1.15}
-          saturation={1}
-          reveal="rise"
-          duration={1.4}
-          stagger={0.08}
-          trigger="view"
-          align="left"
-          style={{ textTransform: 'uppercase' }}
-        />
+        {goldReady ? (
+          <MaskedHeading
+            text={text}
+            tag="h2"
+            src={GOLD_TEXTURE}
+            weight={300}
+            tracking={-0.02}
+            lineHeight={0.92}
+            textScale={0.14}
+            fillScale={1.1}
+            parallax={18}
+            brightness={1.15}
+            saturation={1}
+            reveal="rise"
+            duration={1.4}
+            stagger={0.08}
+            trigger="view"
+            align="left"
+            style={{ textTransform: 'uppercase' }}
+          />
+        ) : null}
       </div>
     </div>
   );
@@ -265,7 +300,7 @@ function StillChapters() {
         <section
           key={chapter.numeral}
           aria-label={`Chapter ${chapter.numeral} — ${chapter.title}`}
-          className="relative flex min-h-[80svh] items-end overflow-hidden border-t border-line/40"
+          className="relative flex min-h-[80svh] items-end overflow-hidden border-t border-line/40 bg-surface"
         >
           <div
             aria-hidden
@@ -294,6 +329,71 @@ function StillChapters() {
         </section>
       ))}
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------
+   Interlude plate.
+
+   The atelier image grows from a rounded frame to full bleed. When neither
+   `atelier-hands.jpg` nor its fallback exists, the same frame expands as a
+   dark surface inside a hairline rule — the gesture survives, the bytes do not.
+   ------------------------------------------------------------------------- */
+
+function InterludePlate() {
+  const resolved = useResolvedImage(ATELIER_HANDS);
+
+  const caption = (
+    <p className="display-italic text-[clamp(1.5rem,4.4vw,3.6rem)] leading-tight text-ivory">
+      Forty hours.
+      <br />
+      One ring.
+    </p>
+  );
+
+  // Still checking: reserve the exact pinned height so nothing jumps when the
+  // answer arrives. No image, no frame, no shift.
+  if (resolved === undefined) {
+    return <div aria-hidden className="h-[240svh]" />;
+  }
+
+  if (resolved === null) {
+    return (
+      <div className="relative h-[240svh]">
+        <div className="sticky top-0 flex h-[100svh] items-center justify-center">
+          <div className="relative flex h-[54svh] w-[46vw] min-w-[16rem] items-center justify-center overflow-hidden rounded-[18px] border border-line bg-surface">
+            <div
+              aria-hidden
+              className="absolute inset-0 grain-veil opacity-70"
+              style={{
+                backgroundImage:
+                  'radial-gradient(64% 58% at 50% 42%, rgba(201,169,97,0.14), transparent 72%)',
+              }}
+            />
+            <div className="relative px-8 text-center">{caption}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ScrollExpand
+      src={resolved}
+      alt="A jeweller's hands setting a diamond under a loupe lamp."
+      startWidth={46}
+      startHeight={54}
+      startRadius={18}
+      endRadius={0}
+      mediaZoom={1.14}
+      scrollDistance={1.2}
+      holdDistance={0.2}
+      smoothing={0.9}
+      overlayScrim={0.42}
+      useWindowScroll
+    >
+      {caption}
+    </ScrollExpand>
   );
 }
 
@@ -532,26 +632,7 @@ export default function StoryChapters() {
         aria-label="Interlude — the atelier"
         className="relative"
       >
-        <ScrollExpand
-          src={ATELIER_HANDS}
-          alt=""
-          startWidth={46}
-          startHeight={54}
-          startRadius={18}
-          endRadius={0}
-          mediaZoom={1.14}
-          scrollDistance={1.2}
-          holdDistance={0.2}
-          smoothing={0.9}
-          overlayScrim={0.42}
-          useWindowScroll
-        >
-          <p className="display-italic text-[clamp(1.5rem,4.4vw,3.6rem)] leading-tight text-ivory">
-            Forty hours.
-            <br />
-            One ring.
-          </p>
-        </ScrollExpand>
+        <InterludePlate />
       </section>
 
       {/* CHAPTER IV — THE HAND. */}

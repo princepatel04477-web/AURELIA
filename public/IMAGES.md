@@ -63,16 +63,53 @@ Until a file is delivered, the component that uses it must render its `--surface
 | `ring-model.glb` | Hero ring — low-poly, 4k maps, < 2 MB | — | 3D hero | Drachma-style solitaire, PBR gold |
 | `ring-normal.jpg` | Ring normal map | 1:1 | 3D hero | Tangent-space normal |
 | `ring-metal.jpg` | Ring metalness/roughness map | 1:1 | 3D hero | Gold roughness variation |
+| `gold-texture.jpg` | Molten gold surface — the fill for chapter headlines | 16:9 | Chapters II–IV headlines (`MaskedHeading`) | Abstract macro of a molten gold surface |
+| `atelier-hands.jpg` | Interlude plate — the work itself | 16:9 | Interlude, between III and IV (`ScrollExpand`) | A jeweller's hands setting a diamond under a loupe lamp |
 | `menu-editorial.jpg` | Full-screen menu journal column | 3:4 | Navbar menu | Atelier detail, vertical crop |
 | `og-aurelia.jpg` | Open Graph card (1200×630) | 1.91:1 | Metadata | Wordmark over a single stone |
 
+## /public/models/ — the object
+
+| File | Role | Format | Used by | Note |
+|---|---|---|---|---|
+| `ring.glb` | Hero ring, the real model | glTF 2.0 binary | 3D hero — `components/three/Ring.tsx` via `useGLTF` | ≤ 2 MB, Draco, PBR gold, Y-up. Absent → the procedural solitaire stands in. |
+
+`cinematic/ring-model.glb` above stays reserved for the React Bits `ModelViewer`; the hero canvas reads
+`models/ring.glb` first and only that path is treated as the hero object.
+
 ---
+
+## Single source of truth — read this before adding an image
+
+**This file is the only place an image path may be introduced.** A path that is not in this table must not
+appear in code. The rule is enforced, not just documented:
+
+- `/lib/assets.ts` mirrors this table as typed constants (`CINEMATIC`, `JEWELRY`) and exposes
+  `CODE_IMAGE_PATHS` — every image path the app can request — plus `ASSET_FALLBACKS`.
+- `auditAssets()` (dev only) diffs three things and returns them separately:
+  `manifestOnly` (listed here, not used yet), `missing` (referenced in code, absent from `/public`),
+  and `uncovered` (missing **and** without a fallback). The build is only honest when
+  `uncovered` is empty.
+- Extension convention: **cinematic plates are `.jpg`.** Do not switch a delivered file to `.webp`
+  (or the reverse) without changing this table first — the audit keys off exact filenames.
+
+### Fallbacks — required for every entry used in code
+
+| Asset | When absent |
+|---|---|
+| `gold-texture.jpg` | Headline renders with the CSS gold gradient fill (`#C9A961 → #EBD8A6`). No swap, no shift: the gradient heading stays in normal flow, the textured heading is an absolutely-positioned overlay. |
+| `atelier-hands.jpg` | Falls back to `chapter-hand.jpg`; if that is absent too, a dark `--surface` plate inside a 1px hairline frame, caption intact. Never an `<img>` with a broken source. |
+| `chapter-*.jpg` stills | Rendered as a CSS `background-image` over `--surface`, so a missing plate is simply a darker frame — no broken-image glyph, no reflow. |
+| `ring.glb` | The procedural solitaire in `components/three/Ring.tsx` stands in. |
+| Product cards (Phase 4) | Dark `--surface` card + hairline frame, fixed aspect ratio so nothing shifts. |
 
 ## Technical contract
 
 - **Hero plate**: 2400 × 1350 minimum, ≤ 420 KB AVIF.
 - **Product stills**: 1600 px on the long edge, ≤ 260 KB each.
-- **Textures** (`gold-foil`, `env-studio`): power-of-two where possible; HDR ≤ 1 MB.
+- **Textures** (`gold-texture`, `gold-foil`, `env-studio`): power-of-two where possible; HDR ≤ 1 MB.
+- **`gold-texture.jpg` / `atelier-hands.jpg`**: both 16:9, 2400 × 1350, ≤ 320 KB — they run full-bleed
+  behind pinned type, so banding and visible compression blocks are disqualifying.
 - **GLB**: ≤ 2 MB, Draco-compressed, PBR Metallic-Roughness, Y-up, real-world scale in mm.
 - Every `<Image>` needs `alt` text drawn from this table, explicit `width`/`height` (or `fill` + `sizes`),
   and `loading="lazy"` except the hero plate.
@@ -83,3 +120,6 @@ Until a file is delivered, the component that uses it must render its `--surface
 Drop files into `/public/jewelry/` and `/public/cinematic/` with the exact names above.
 Missing files are tolerated by the components (fallback plate), but the final QA pass
 compares this manifest against the folder contents 1:1.
+
+A delivery is accepted only when `auditAssets().uncovered` is empty — i.e. every path the code
+requests either exists on disk or has a declared fallback in the table above.
