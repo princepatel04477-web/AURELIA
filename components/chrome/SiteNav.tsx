@@ -8,9 +8,11 @@ import { useReducedMotion } from '@/lib/useReducedMotion';
 
 const ITEMS = [
   { numeral: 'I', label: 'The House', href: '/', note: 'Surat · since 1998' },
-  { numeral: 'II', label: 'The Chapters', href: '#story', note: 'Stone · Fire · Hand' },
-  { numeral: 'III', label: 'The Collection', href: '#collection', note: 'Four pieces' },
-  { numeral: 'IV', label: 'The Atelier', href: '#atelier', note: 'By appointment' },
+  { numeral: 'II', label: 'The Making', href: '/#film', note: 'Stone · Fire · Hand' },
+  { numeral: 'III', label: 'Make It Yours', href: '/#configure', note: 'Four metals' },
+  { numeral: 'IV', label: 'The Collection', href: '/#collection', note: 'Eight pieces' },
+  { numeral: 'V', label: 'The Commission', href: '/#bespoke', note: 'Private viewing' },
+  { numeral: 'VI', label: 'The Atelier', href: '/#atelier', note: 'By appointment' },
 ] as const;
 
 /**
@@ -26,10 +28,18 @@ export function SiteNav() {
   const { lenis } = useSmoothScroll();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
+  // Solid once the page moves; tucked away while reading down, back on any scroll up.
   useEffect(() => {
+    let last = window.scrollY;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 40);
+      const y = window.scrollY;
+      setScrolled(y > 40);
+      if (Math.abs(y - last) > 6) {
+        setHidden(y > last && y > 160);
+        last = y;
+      }
     };
     handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -123,55 +133,65 @@ export function SiteNav() {
 
   return (
     <>
-      {/* The slim bar. */}
-      <div
-        className={`pointer-events-none fixed inset-x-0 top-0 z-[65] flex justify-center transition-all duration-300 ${
-          scrolled ? 'backdrop-blur-md bg-[#0A0907]/70 border-b border-gold/15' : 'bg-transparent'
+      {/* The bar: menu · wordmark · appointment. */}
+      <header
+        className={`fixed inset-x-0 top-0 z-[65] transition-[transform,background-color,border-color] duration-500 ease-out-expo ${
+          hidden && !open ? '-translate-y-full' : 'translate-y-0'
+        } ${
+          scrolled && !open
+            ? 'border-b border-gold/15 bg-[#0A0907]/80 backdrop-blur-md'
+            : 'border-b border-transparent bg-gradient-to-b from-[#0A0907]/85 to-transparent'
         }`}
       >
-        <div
-          className={`pointer-events-auto flex w-full items-center justify-between px-[clamp(1.25rem,5vw,5rem)] transition-all duration-300 ${
-            scrolled ? 'py-3.5' : 'pt-[2.4vh] pb-3'
-          }`}
-        >
-          <Link
-            href="/"
-            className="label inline-flex min-h-11 items-center tracking-[0.42em] text-ivory transition-colors duration-300 hover:text-gold-bright"
-          >
-            Aurelia
-          </Link>
-
+        <div className="frame grid h-16 grid-cols-[1fr_auto_1fr] items-center sm:h-[4.5rem]">
           <button
             ref={toggleRef}
             type="button"
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls="site-menu"
-            className="group flex min-h-11 items-center gap-4"
+            aria-label={open ? 'Close menu' : 'Open menu'}
+            className="group flex min-h-11 items-center gap-3 justify-self-start"
           >
-            <span className="label text-ivory transition-colors duration-300 group-hover:text-gold-bright">
+            <span aria-hidden className="relative flex h-[11px] w-6 flex-col justify-between">
+              <span
+                className={`block h-px w-full origin-center bg-gold-bright transition-transform duration-500 ease-out-expo ${
+                  open ? 'translate-y-[5px] rotate-45' : 'group-hover:w-4'
+                }`}
+              />
+              <span
+                className={`block h-px w-full origin-center bg-gold-bright transition-transform duration-500 ease-out-expo ${
+                  open ? '-translate-y-[5px] -rotate-45' : ''
+                }`}
+              />
+            </span>
+            <span className="text-[0.6875rem] font-medium uppercase tracking-[0.28em] text-ivory transition-colors duration-300 group-hover:text-gold-bright">
               {open ? 'Close' : 'Menu'}
             </span>
-            <span aria-hidden className="relative flex h-3 w-5 flex-col justify-between">
-              <span
-                className={`block h-px w-full bg-gold transition-transform duration-300 ${
-                  open ? 'translate-y-[5.5px] rotate-45' : ''
-                }`}
-              />
-              <span
-                className={`block h-px w-full bg-gold transition-opacity duration-300 ${
-                  open ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-              <span
-                className={`block h-px w-full bg-gold transition-transform duration-300 ${
-                  open ? '-translate-y-[5.5px] -rotate-45' : ''
-                }`}
-              />
-            </span>
           </button>
+
+          <Link
+            href="/"
+            onClick={close}
+            aria-label="AURELIA — home"
+            className="gold-letter justify-self-center font-display text-[1.15rem] font-[400] uppercase leading-none tracking-[0.42em] [margin-right:-0.42em] sm:text-[1.4rem]"
+          >
+            Aurelia
+          </Link>
+
+          <Link
+            href="/#bespoke"
+            onClick={close}
+            className="group hidden min-h-11 items-center gap-3 justify-self-end sm:inline-flex"
+          >
+            <span className="text-[0.6875rem] font-medium uppercase tracking-[0.28em] text-ivory transition-colors duration-300 group-hover:text-gold-bright">
+              Book a viewing
+            </span>
+            <span aria-hidden className="block h-px w-6 bg-gold transition-[width] duration-500 ease-out-expo group-hover:w-10" />
+          </Link>
+          <span aria-hidden className="sm:hidden" />
         </div>
-      </div>
+      </header>
 
       {/* The editorial page. */}
       <div
@@ -192,7 +212,7 @@ export function SiteNav() {
 
         <nav
           aria-label="Chapters"
-          className="frame relative z-10 flex flex-1 flex-col justify-center gap-2 pt-[12vh]"
+          className="frame relative z-10 flex flex-1 flex-col justify-center gap-1 pt-24"
         >
           {ITEMS.map((item, index) => (
             <Link
@@ -201,12 +221,12 @@ export function SiteNav() {
               ref={index === 0 ? firstLinkRef : undefined}
               onClick={close}
               data-nav-item
-              className="group flex items-baseline gap-5 border-b border-line/30 py-4 opacity-0"
+              className="group flex items-baseline gap-5 border-b border-line/30 py-3 opacity-0"
             >
               <span className="label w-8 shrink-0 text-muted transition-colors duration-[900ms] ease-out-expo group-hover:text-gold">
                 {item.numeral}
               </span>
-              <span className="display text-[clamp(2rem,6vw,4.4rem)] leading-[1.02] text-ivory transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
+              <span className="display text-[clamp(1.9rem,5vw,3.8rem)] leading-[1.02] text-ivory transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
                 {item.label}
               </span>
               <span className="label ml-auto hidden self-center text-muted sm:block">

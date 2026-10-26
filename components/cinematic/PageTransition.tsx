@@ -13,7 +13,8 @@ gsap.registerPlugin(ScrollTrigger);
 /** The cut: bars meet at the centre, then part again. */
 const CLOSE_MS = 600;
 const OPEN_MS = 700;
-const REST = '6vh';
+/** At rest the curtain is fully open: it exists only during a cut, never over the nav. */
+const REST = '0px';
 const SHUT = '50vh';
 
 /**
@@ -22,7 +23,7 @@ const SHUT = '50vh';
  * Click → the letterbox bars close to the centre on a 600ms inOutQuart →
  * the route swaps behind the closed frame (the Stage stays mounted; the camera
  * is told to drop its override so it lands on the new page's first shot) →
- * the bars part to 6vh → the new page's sections stagger in from `template.tsx`.
+ * the bars part fully → the new page's sections stagger in from `template.tsx`.
  *
  * `Letterbox` still owns the load-in and still animates on a route change; the
  * real panels are hidden while this curtain is on screen and handed back once
