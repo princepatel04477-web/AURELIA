@@ -2,7 +2,7 @@ import { ChapterCard } from '@/components/chrome/ChapterCard';
 import { COLLECTION, formatPrice } from '@/lib/data';
 
 /**
- * CHAPTER VII — THE ATELIER.
+ * CHAPTER VIII — THE ATELIER.
  *
  * The film ends where the work begins: the house, the address, one instruction
  * and one price list headline. No forms, no newsletter, no social icons.
@@ -26,7 +26,7 @@ export function Atelier() {
       />
 
       <div className="frame relative z-10 pb-[calc(var(--letterbox)+2rem)] pt-[calc(var(--letterbox)+5rem)]">
-        <ChapterCard numeral="VII" title="The Atelier" meta="Surat · Gujarat" />
+        <ChapterCard numeral="VIII" title="The Atelier" meta="Surat · Gujarat" />
 
         <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7">

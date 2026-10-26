@@ -113,8 +113,8 @@ const RAIL: { key: RailKey; numeral: string; label: string }[] = [
   { key: 'hand', numeral: 'IV', label: 'The Hand' },
   { key: 'collection', numeral: 'V', label: 'The Collection' },
   { key: 'one', numeral: 'VI', label: 'The One' },
-  { key: 'atelier', numeral: 'VII', label: 'The Atelier' },
-  { key: 'commission', numeral: 'VIII', label: 'The Commission' },
+  { key: 'commission', numeral: 'VII', label: 'The Commission' },
+  { key: 'atelier', numeral: 'VIII', label: 'The Atelier' },
 ];
 
 /** Sections that live outside this component, mapped to their rail tick. */

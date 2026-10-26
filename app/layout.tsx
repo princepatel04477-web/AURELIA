@@ -4,6 +4,8 @@ import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvide
 import { NoiseOverlay } from '@/components/chrome/NoiseOverlay';
 import { Letterbox } from '@/components/chrome/Letterbox';
 import { SiteNav } from '@/components/chrome/SiteNav';
+import { PageTransition } from '@/components/cinematic/PageTransition';
+import { Footer } from '@/components/sections/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -46,12 +48,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </a>
 
           <Letterbox />
+          <PageTransition />
           <SiteNav />
           <NoiseOverlay />
 
           <main id="main" className="relative">
             {children}
           </main>
+
+          <Footer />
         </SmoothScrollProvider>
       </body>
     </html>
