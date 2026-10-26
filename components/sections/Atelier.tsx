@@ -5,15 +5,16 @@ import { COLLECTION, formatPrice } from '@/lib/data';
  * CHAPTER VIII — THE ATELIER.
  *
  * The film ends where the work begins: the house, the address, one instruction
- * and one price list headline. No forms, no newsletter, no social icons.
+ * and one price list headline. No forms, no newsletter, no social icons, and no
+ * sign-off — the closing wordmark and the copyright live in Footer.tsx.
  */
 export function Atelier() {
   const from = Math.min(...COLLECTION.map((piece) => piece.price));
 
   return (
-    <footer
+    <section
       id="atelier"
-      aria-labelledby="atelier-title"
+      aria-labelledby="atelier-heading"
       className="relative overflow-hidden border-t border-line/40 bg-bg"
     >
       <div
@@ -31,7 +32,7 @@ export function Atelier() {
         <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <h2
-              id="atelier-title"
+              id="atelier-heading"
               className="display text-[clamp(2.2rem,5.4vw,4.8rem)] leading-[0.95] text-ivory"
             >
               Made by hand,
@@ -82,19 +83,7 @@ export function Atelier() {
             </div>
           </div>
         </div>
-
-        {/* The sign-off: the house name, held wide and quiet. */}
-        <div className="mt-24 select-none" aria-hidden>
-          <p className="display text-[clamp(3rem,15vw,13rem)] uppercase leading-[0.8] tracking-[-0.03em] gold-gradient">
-            Aurelia
-          </p>
-        </div>
-
-        <div className="mt-10 flex flex-col gap-4 border-t border-line/40 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="label text-muted">© 2026 Aurelia — Fine Jewellery, Surat</p>
-          <p className="label text-muted">Made in Gujarat, India</p>
-        </div>
       </div>
-    </footer>
+    </section>
   );
 }
