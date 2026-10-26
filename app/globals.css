@@ -174,6 +174,23 @@
     color: transparent;
   }
 
+  .hero-wordmark {
+    background-image: linear-gradient(100deg, #C9A961 0%, #EBD8A6 45%, #C9A961 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .hero-wordmark .split-char {
+    background-image: linear-gradient(100deg, #C9A961 0%, #EBD8A6 45%, #C9A961 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: inline-block;
+  }
+
   .grain-veil {
     background-image: radial-gradient(circle at 50% 40%, rgba(201, 169, 97, 0.06), transparent 62%);
   }

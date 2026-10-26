@@ -25,6 +25,16 @@ export function SiteNav() {
   const reducedMotion = useReducedMotion();
   const { lenis } = useSmoothScroll();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const timelineRef = useRef<Timeline | null>(null);
@@ -114,11 +124,19 @@ export function SiteNav() {
   return (
     <>
       {/* The slim bar. */}
-      <div className="pointer-events-none fixed inset-x-0 top-0 z-[65] flex justify-center">
-        <div className="pointer-events-auto flex w-full items-center justify-between px-[clamp(1.25rem,5vw,5rem)] pt-[2.4vh]">
+      <div
+        className={`pointer-events-none fixed inset-x-0 top-0 z-[65] flex justify-center transition-all duration-300 ${
+          scrolled ? 'backdrop-blur-md bg-[#0A0907]/70 border-b border-gold/15' : 'bg-transparent'
+        }`}
+      >
+        <div
+          className={`pointer-events-auto flex w-full items-center justify-between px-[clamp(1.25rem,5vw,5rem)] transition-all duration-300 ${
+            scrolled ? 'py-3.5' : 'pt-[2.4vh] pb-3'
+          }`}
+        >
           <Link
             href="/"
-            className="label inline-flex min-h-11 items-center tracking-[0.42em] text-ivory/90 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+            className="label inline-flex min-h-11 items-center tracking-[0.42em] text-ivory transition-colors duration-300 hover:text-gold-bright"
           >
             Aurelia
           </Link>
@@ -131,22 +149,22 @@ export function SiteNav() {
             aria-controls="site-menu"
             className="group flex min-h-11 items-center gap-4"
           >
-            <span className="label text-ivory/80 transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
+            <span className="label text-ivory transition-colors duration-300 group-hover:text-gold-bright">
               {open ? 'Close' : 'Menu'}
             </span>
             <span aria-hidden className="relative flex h-3 w-5 flex-col justify-between">
               <span
-                className={`block h-px w-full bg-gold transition-transform duration-[900ms] ease-out-expo ${
+                className={`block h-px w-full bg-gold transition-transform duration-300 ${
                   open ? 'translate-y-[5.5px] rotate-45' : ''
                 }`}
               />
               <span
-                className={`block h-px w-full bg-gold transition-opacity duration-[900ms] ease-out-expo ${
+                className={`block h-px w-full bg-gold transition-opacity duration-300 ${
                   open ? 'opacity-0' : 'opacity-100'
                 }`}
               />
               <span
-                className={`block h-px w-full bg-gold transition-transform duration-[900ms] ease-out-expo ${
+                className={`block h-px w-full bg-gold transition-transform duration-300 ${
                   open ? '-translate-y-[5.5px] -rotate-45' : ''
                 }`}
               />
