@@ -55,6 +55,21 @@ export type StagePauseDetail = { paused: boolean };
  */
 let externalShot: CameraShot | null = null;
 
+/** Bloom the current frame is lit for. Written by the rig, read by `Effects`. */
+const stageBloom = { target: SHOTS.hero.bloomIntensity };
+
+export function getStageBloomTarget(): number {
+  return stageBloom.target;
+}
+
+/** Which named shot a chapter beat is cut like — used for lighting, not framing. */
+const BEAT_SHOT: Record<StageBeat, CameraShot> = {
+  stone: 'stone',
+  fire: 'fire',
+  interlude: 'collection',
+  hand: 'hand',
+};
+
 export function setStageShot(shot: CameraShot | null): void {
   externalShot = shot;
   if (shot) requestFrames?.(true);
@@ -358,6 +373,7 @@ export function CameraRig() {
 
     if (rig.reducedMotion) {
       // Stillness: the shot is real, it just does not move.
+      stageBloom.target = SHOTS[externalShot ?? rig.shot].bloomIntensity;
       const still = SHOTS[externalShot ?? rig.shot];
       camera.position.set(...still.position);
       camera.fov = still.fov * portraitBoost(camera.aspect);
@@ -368,6 +384,15 @@ export function CameraRig() {
 
     const dt = Math.min(delta, 0.05);
     const heroShot = SHOTS.hero;
+
+    // Bloom follows the cut: the beat's shot, the intro, or the named shot.
+    if (stageState.beat !== null) {
+      stageBloom.target = SHOTS[BEAT_SHOT[stageState.beat]].bloomIntensity;
+    } else if (!rig.introComplete) {
+      stageBloom.target = INTRO_SHOT.bloomIntensity;
+    } else {
+      stageBloom.target = SHOTS[externalShot ?? rig.shot].bloomIntensity;
+    }
 
     scanClock.current += dt;
     if (!ring.current && scanClock.current > 0.5) {

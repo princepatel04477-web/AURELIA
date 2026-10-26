@@ -35,6 +35,9 @@ const StarBorder = dynamic(() => import('@/components/reactbits/StarBorder/StarB
 const GlareHover = dynamic(() => import('@/components/reactbits/GlareHover/GlareHover'), {
   ssr: false,
 });
+const TiltedCard = dynamic(() => import('@/components/reactbits/TiltedCard/TiltedCard'), {
+  ssr: false,
+});
 
 const THE_PIECE = {
   name: 'The Noor Solitaire',
@@ -65,19 +68,35 @@ const probe = (src: string): Promise<boolean> =>
     .then((response) => response.ok)
     .catch(() => false);
 
-/** Probe the four angles once; anything absent becomes the inline plate. */
-function useAngles(): string[] | undefined {
-  const [angles, setAngles] = useState<string[] | undefined>(undefined);
+type AngleSet = {
+  /** The angles that actually exist, in order. */
+  real: string[];
+  /** What a still card should show: the one real angle, or the plate. */
+  still: string;
+};
+
+/**
+ * Probe the four angles once.
+ *
+ * One real image is not a slide show — it is a photograph. The slider only
+ * earns its WebGL context at two or more real angles and cycles only those.
+ */
+function useAngles(): AngleSet | undefined {
+  const [set, setSet] = useState<AngleSet | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all(THE_PIECE.angles.map(async (src) => ((await probe(src)) ? src : PLATE_URI)))
-      .then((resolved) => {
-        if (!cancelled) setAngles(resolved);
+    Promise.all(
+      THE_PIECE.angles.map(async (src): Promise<string | null> => ((await probe(src)) ? src : null))
+    )
+      .then((results) => {
+        if (cancelled) return;
+        const real = results.filter((src): src is string => src !== null);
+        setSet({ real, still: real[0] ?? PLATE_URI });
       })
       .catch(() => {
-        if (!cancelled) setAngles(THE_PIECE.angles.map(() => PLATE_URI));
+        if (!cancelled) setSet({ real: [], still: PLATE_URI });
       });
 
     return () => {
@@ -85,7 +104,7 @@ function useAngles(): string[] | undefined {
     };
   }, []);
 
-  return angles;
+  return set;
 }
 
 export default function FeaturedPiece() {
@@ -93,11 +112,13 @@ export default function FeaturedPiece() {
   const sectionRef = useRef<HTMLElement>(null);
   const specRef = useRef<HTMLDListElement>(null);
   const angles = useAngles();
+  const useSlider = (angles?.real.length ?? 0) >= 2;
 
   // The slider is its own WebGL surface: park the stage while it is on screen.
+  // With fewer than two real angles there is no slider, so nothing to park.
   useEffect(() => {
     const node = sectionRef.current;
-    if (!node) return undefined;
+    if (!node || !useSlider) return undefined;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -116,7 +137,7 @@ export default function FeaturedPiece() {
       observer.disconnect();
       window.dispatchEvent(new CustomEvent(STAGE_PAUSE_EVENT, { detail: { paused: false } }));
     };
-  }, []);
+  }, [useSlider]);
 
   // Spec rules draw themselves, once, when the rows are in view.
   useEffect(() => {
@@ -205,9 +226,18 @@ export default function FeaturedPiece() {
               transitionDuration={1600}
             >
               <div className="relative aspect-[4/5] w-full overflow-hidden">
-                {angles ? (
+                {angles === undefined ? (
+                  <div
+                    aria-hidden
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage:
+                        'radial-gradient(64% 56% at 50% 42%, rgba(201,169,97,0.14), transparent 74%)',
+                    }}
+                  />
+                ) : useSlider ? (
                   <MorphSlider
-                    items={angles.map((image, index) => ({
+                    items={angles.real.map((image, index) => ({
                       image,
                       caption: `Angle ${index + 1}`,
                     }))}
@@ -229,20 +259,27 @@ export default function FeaturedPiece() {
                     className="absolute inset-0 h-full w-full"
                   />
                 ) : (
-                  <div
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage:
-                        'radial-gradient(64% 56% at 50% 42%, rgba(201,169,97,0.14), transparent 74%)',
-                    }}
-                  />
+                  <div className="absolute inset-0 flex items-center justify-center p-2">
+                    <TiltedCard
+                      imageSrc={angles.still}
+                      altText={`${THE_PIECE.name} — ${THE_PIECE.stone} in ${THE_PIECE.metal}.`}
+                      captionText={THE_PIECE.name}
+                      containerHeight="100%"
+                      containerWidth="100%"
+                      imageHeight="100%"
+                      imageWidth="100%"
+                      scaleOnHover={1.02}
+                      rotateAmplitude={6}
+                      showTooltip={false}
+                      radius={0}
+                    />
+                  </div>
                 )}
               </div>
             </GlareHover>
 
             <p className="label mt-4 text-muted">
-              Four angles · drag to turn the piece
+              {useSlider ? 'Four angles · drag to turn the piece' : 'The piece, as it is'}
             </p>
           </div>
 

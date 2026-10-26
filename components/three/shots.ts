@@ -15,6 +15,8 @@ export type ShotDefinition = {
   target: Vector3Tuple;
   /** Vertical field of view for this shot. */
   fov: number;
+  /** Bloom intensity this shot is lit for (desktop post stack only). */
+  bloomIntensity: number;
 };
 
 export const SHOTS: Record<CameraShot, ShotDefinition> = {
@@ -23,36 +25,42 @@ export const SHOTS: Record<CameraShot, ShotDefinition> = {
     position: [0.12, 0.62, 4.2],
     target: [0, 0.18, 0],
     fov: 32,
+    bloomIntensity: 0.6,
   },
   /** Macro on the stone — the chapter about the cut. */
   stone: {
     position: [0.52, 1.38, 1.72],
     target: [0.02, 0.82, 0],
     fov: 28,
+    bloomIntensity: 0.8,
   },
   /** Fire: low three-quarter, light raking across the pavilion. */
   fire: {
     position: [-2.1, 0.55, 3.0],
     target: [0, 0.2, 0],
     fov: 34,
+    bloomIntensity: 1.2,
   },
   /** Hand: worn, closer to the body, gentler angle. */
   hand: {
     position: [0.36, 0.02, 3.05],
     target: [0, 0.06, 0],
     fov: 36,
+    bloomIntensity: 0.7,
   },
   /** Collection: a wide, quiet step back. */
   collection: {
     position: [0, 1.9, 6.2],
     target: [0, 0.02, 0],
     fov: 30,
+    bloomIntensity: 0.4,
   },
   /** Finale: the house pulls away and leaves the object lit. */
   finale: {
     position: [0, 1.15, 8.0],
     target: [0, 0.0, 0],
     fov: 26,
+    bloomIntensity: 1.1,
   },
 };
 
@@ -63,6 +71,7 @@ export const INTRO_SHOT: ShotDefinition = {
   position: [0.5, 3.2, 8.8],
   target: [0, 0.0, 0],
   fov: 30,
+  bloomIntensity: 0.5,
 };
 
 /** The dolly-in is a deliberate 3 seconds. */

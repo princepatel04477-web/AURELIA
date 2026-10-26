@@ -100,7 +100,7 @@ export default function BespokeCTA() {
   const [touched, setTouched] = useState<Partial<Record<keyof Fields, boolean>>>({});
   const [status, setStatus] = useState<'idle' | 'sending' | 'collapsing' | 'sent'>('idle');
 
-  // Chapter VII owns the stage's finale shot while it is on screen.
+  // Chapter VIII owns the stage's finale shot while it is on screen.
   useEffect(() => {
     const node = sectionRef.current;
     if (!node) return undefined;
@@ -294,16 +294,6 @@ export default function BespokeCTA() {
             'radial-gradient(64% 54% at 50% 18%, rgba(235,216,166,0.16), rgba(201,169,97,0.05) 48%, transparent 76%)',
         }}
       />
-      {/* Bloom lift — a soft screen layer over the finale shot. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 mix-blend-screen"
-        style={{
-          backgroundImage:
-            'radial-gradient(42% 34% at 50% 30%, rgba(235,216,166,0.10), transparent 72%)',
-        }}
-      />
-
       {/* The drawn gold frame. */}
       <svg
         ref={frameRef}
@@ -368,7 +358,7 @@ export default function BespokeCTA() {
 
       <div className="frame relative z-10 flex min-h-[100svh] flex-col justify-center pb-[calc(var(--letterbox)+3rem)] pt-[calc(var(--letterbox)+4rem)]">
         <div className="mx-auto w-full max-w-2xl text-center">
-          <span className="label text-gold">Chapter VII — The Commission</span>
+          <span className="label text-gold">Chapter VIII — The Commission</span>
 
           <h2
             id="bespoke-title"

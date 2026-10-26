@@ -29,6 +29,16 @@ const ScrollExpand = dynamic(() => import('@/components/reactbits/ScrollExpand/S
 const GOLD_TEXTURE = CINEMATIC.goldTexture;
 const ATELIER_HANDS = CINEMATIC.atelierHands;
 
+type RailKey =
+  | 'stone'
+  | 'fire'
+  | 'interlude'
+  | 'hand'
+  | 'collection'
+  | 'one'
+  | 'atelier'
+  | 'commission';
+
 type Chapter = {
   beat: StageBeat;
   numeral: string;
@@ -40,12 +50,15 @@ type Chapter = {
   to: number;
   /** Still plate used when motion is reduced or an asset is missing. */
   still: string;
+  /** Which tick of the progress rail this chapter owns. */
+  rail: RailKey;
 };
 
 const CHAPTERS: Chapter[] = [
   {
     beat: 'stone',
     numeral: 'II',
+    rail: 'stone',
     title: 'The Stone',
     headline: 'The Stone',
     body: 'Every stone is chosen by hand, under north light.',
@@ -56,6 +69,7 @@ const CHAPTERS: Chapter[] = [
   {
     beat: 'fire',
     numeral: 'III',
+    rail: 'fire',
     title: 'The Fire',
     headline: 'The Fire',
     body: 'Gold is worked at the temperature where it remembers.',
@@ -66,6 +80,7 @@ const CHAPTERS: Chapter[] = [
   {
     beat: 'hand',
     numeral: 'IV',
+    rail: 'hand',
     title: 'The Hand',
     headline: 'The Hand',
     body: 'A pattern cut by hand, then worn smooth by a lifetime.',
@@ -78,6 +93,7 @@ const CHAPTERS: Chapter[] = [
 const INTERLUDE: Chapter = {
   beat: 'interlude',
   numeral: 'III · IV',
+  rail: 'interlude',
   title: 'The Hours',
   headline: 'The Hours',
   body: 'Forty hours. One ring.',
@@ -86,11 +102,27 @@ const INTERLUDE: Chapter = {
   still: CINEMATIC.chapterHand,
 };
 
-const RAIL = [
-  { numeral: 'II', label: 'The Stone' },
-  { numeral: 'III', label: 'The Fire' },
-  { numeral: '·', label: 'The Hours' },
-  { numeral: 'IV', label: 'The Hand' },
+/**
+ * The progress rail indexes the whole film, II → VIII. Only the chapter that
+ * owns the screen is lit; the rest stay as hairlines.
+ */
+const RAIL: { key: RailKey; numeral: string; label: string }[] = [
+  { key: 'stone', numeral: 'II', label: 'The Stone' },
+  { key: 'fire', numeral: 'III', label: 'The Fire' },
+  { key: 'interlude', numeral: '·', label: 'The Hours' },
+  { key: 'hand', numeral: 'IV', label: 'The Hand' },
+  { key: 'collection', numeral: 'V', label: 'The Collection' },
+  { key: 'one', numeral: 'VI', label: 'The One' },
+  { key: 'atelier', numeral: 'VII', label: 'The Atelier' },
+  { key: 'commission', numeral: 'VIII', label: 'The Commission' },
+];
+
+/** Sections that live outside this component, mapped to their rail tick. */
+const LATER_SECTIONS: { id: string; key: RailKey }[] = [
+  { id: 'collection', key: 'collection' },
+  { id: 'the-one', key: 'one' },
+  { id: 'bespoke', key: 'commission' },
+  { id: 'atelier', key: 'atelier' },
 ];
 
 /* -------------------------------------------------------------------------
@@ -424,7 +456,7 @@ export default function StoryChapters() {
   const railRef = useRef<HTMLDivElement>(null);
   const timelines = useRef<Timeline[]>([]);
   /** −1 while the hero owns the screen; 0–3 inside the passage. */
-  const [activeChapter, setActiveChapter] = useState(-1);
+  const [activeRail, setActiveRail] = useState<RailKey | null>(null);
 
   // Stable identity: cards must not rebuild their timelines on every scroll tick.
   const register = useCallback((timeline: Timeline) => {
@@ -463,7 +495,7 @@ export default function StoryChapters() {
 
     const triggers: ScrollTrigger[] = [];
 
-    sections.forEach((section, index) => {
+    sections.forEach((section) => {
       const chapter = CHAPTERS.find((entry) => entry.numeral === section.dataset.numeral);
       const isInterlude = section.dataset.beat === 'interlude';
       const beat: StageBeat = isInterlude ? 'interlude' : chapter?.beat ?? 'stone';
@@ -490,11 +522,11 @@ export default function StoryChapters() {
           setLetterbox(self.isActive);
         },
         onEnter: () => {
-          setActiveChapter(index);
+          setActiveRail(isInterlude ? 'interlude' : (chapter?.rail ?? 'stone'));
           setLetterbox(true);
         },
         onEnterBack: () => {
-          setActiveChapter(index);
+          setActiveRail(isInterlude ? 'interlude' : (chapter?.rail ?? 'stone'));
           setLetterbox(true);
         },
         onLeave: () => setLetterbox(false),
@@ -524,6 +556,23 @@ export default function StoryChapters() {
       }
     });
 
+    // The rail also indexes the chapters that live below this component.
+    LATER_SECTIONS.forEach(({ id, key }) => {
+      const node = document.getElementById(id);
+      if (!node) return;
+
+      triggers.push(
+        ScrollTrigger.create({
+          trigger: node,
+          start: 'top center',
+          end: 'bottom center',
+          onEnter: () => setActiveRail(key),
+          onEnterBack: () => setActiveRail(key),
+          onLeaveBack: () => setActiveRail(null),
+        })
+      );
+    });
+
     // Leaving the passage entirely hands the camera back to the hero.
     const release = ScrollTrigger.create({
       trigger: root,
@@ -531,12 +580,11 @@ export default function StoryChapters() {
       end: 'bottom bottom',
       onLeave: () => {
         setStageDirection({ beat: null });
-        setActiveChapter(-1);
         setLetterbox(false);
       },
       onLeaveBack: () => {
         setStageDirection({ beat: null });
-        setActiveChapter(-1);
+        setActiveRail(null);
         setLetterbox(false);
       },
     });
@@ -577,26 +625,25 @@ export default function StoryChapters() {
         ref={railRef}
         aria-hidden
         className={`pointer-events-none fixed left-[clamp(0.6rem,2vw,1.6rem)] top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-5 transition-opacity duration-1200 ease-out-expo sm:flex ${
-          activeChapter >= 0 ? 'opacity-100' : 'opacity-0'
+          activeRail !== null ? 'opacity-100' : 'opacity-0'
         }`}
       >
         <span className="block h-14 w-px bg-gradient-to-b from-transparent to-line" />
-        {RAIL.map((tick, index) => (
-          <div key={tick.numeral} className="flex items-center gap-3">
+        {RAIL.map((tick) => (
+          <div key={tick.key} className="flex items-center gap-3">
             <span
               className={`block transition-all duration-[900ms] ease-out-expo ${
-                index === activeChapter
-                  ? 'h-px w-7 bg-gold-bright'
-                  : 'h-px w-3.5 bg-muted/60'
+                tick.key === activeRail ? 'h-px w-7 bg-gold-bright' : 'h-px w-3.5 bg-muted/60'
               }`}
             />
             <span
-              className={`label transition-opacity duration-[900ms] ease-out-expo ${
-                index === activeChapter ? 'text-gold opacity-100' : 'opacity-0'
+              className={`label whitespace-nowrap transition-opacity duration-[900ms] ease-out-expo ${
+                tick.key === activeRail ? 'text-gold opacity-100' : 'opacity-0'
               }`}
             >
               {tick.label}
             </span>
+            <span className="label text-muted/50">{tick.numeral}</span>
           </div>
         ))}
         <span className="block h-14 w-px bg-gradient-to-t from-transparent to-line" />
