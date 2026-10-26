@@ -3,7 +3,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AssetFrame } from '@/components/chrome/AssetFrame';
 import { ChapterCard } from '@/components/chrome/ChapterCard';
-import { ALL_SLUGS, formatINR, getPieceBySlug } from '@/lib/collections';
+import { PiecePrice } from '@/components/collections/PiecePrice';
+import { PieceStage } from '@/components/collections/PieceStage';
+import { CINEMATIC } from '@/lib/assets';
+import {
+  ALL_SLUGS,
+  COLLECTION_PIECES,
+  formatINR,
+  getPieceBySlug,
+  type CollectionPiece,
+} from '@/lib/collections';
 
 type PiecePageProps = {
   params: Promise<{ slug: string }>;
@@ -19,18 +28,49 @@ export async function generateMetadata({ params }: PiecePageProps): Promise<Meta
 
   if (!piece) return { title: 'Piece not found' };
 
+  const title = `${piece.name} — ${formatINR(piece.priceINR)}`;
+
   return {
-    title: `${piece.name} — ${formatINR(piece.priceINR)}`,
+    title,
     description: piece.description,
+    alternates: { canonical: `/collections/${piece.slug}` },
+    openGraph: {
+      title: `${piece.name} — AURELIA`,
+      description: `${piece.stone} in ${piece.metal}. ${formatINR(piece.priceINR)}.`,
+      url: `/collections/${piece.slug}`,
+      type: 'website',
+      images: [
+        { url: CINEMATIC.ogImage, width: 1200, height: 630, alt: `${piece.name} — AURELIA` },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${piece.name} — AURELIA`,
+      description: `${piece.stone} in ${piece.metal}.`,
+      images: [CINEMATIC.ogImage],
+    },
   };
 }
 
-/** One piece, one price, one action — the deep end of the Call to Buy. */
+/** Related pieces: the same line first, then the rest of the bench. */
+function relatedTo(piece: CollectionPiece): CollectionPiece[] {
+  const sameLine = COLLECTION_PIECES.filter(
+    (entry) => entry.category === piece.category && entry.slug !== piece.slug
+  );
+  const others = COLLECTION_PIECES.filter(
+    (entry) => entry.category !== piece.category && entry.slug !== piece.slug
+  );
+  return [...sameLine, ...others].slice(0, 3);
+}
+
+/** One piece, one price, one action. */
 export default async function PiecePage({ params }: PiecePageProps) {
   const { slug } = await params;
   const piece = getPieceBySlug(slug);
 
   if (!piece) notFound();
+
+  const related = relatedTo(piece);
 
   return (
     <article className="relative min-h-dvh bg-bg">
@@ -43,17 +83,44 @@ export default async function PiecePage({ params }: PiecePageProps) {
         }}
       />
 
-      <div className="frame relative z-10 pb-[calc(var(--letterbox)+3rem)] pt-[calc(var(--letterbox)+4rem)]">
+      <div className="frame relative z-10 pb-[calc(var(--letterbox)+3rem)] pt-[calc(var(--letterbox)+4.5rem)]">
+        {/* Breadcrumbs. */}
+        <nav aria-label="Breadcrumb" className="mb-10">
+          <ol className="label flex flex-wrap items-center gap-3 text-muted">
+            <li>
+              <Link
+                href="/"
+                className="inline-flex min-h-11 items-center transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+              >
+                AURELIA
+              </Link>
+            </li>
+            <li aria-hidden>/</li>
+            <li>
+              <Link
+                href="/collections"
+                className="inline-flex min-h-11 items-center transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+              >
+                The Collection
+              </Link>
+            </li>
+            <li aria-hidden>/</li>
+            <li aria-current="page" className="text-ivory/80">
+              {piece.name}
+            </li>
+          </ol>
+        </nav>
+
         <ChapterCard numeral="V" title={piece.category} meta={piece.metal} />
 
         <div className="mt-12 grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
+          {/* The piece: a model when one is delivered, the still when not. */}
           <div className="lg:col-span-7">
-            <AssetFrame
-              src={piece.image}
+            <PieceStage
+              slug={piece.slug}
+              name={piece.name}
+              image={piece.image}
               alt={`${piece.name} — ${piece.stone} in ${piece.metal}.`}
-              ratio="aspect-[4/5]"
-              className="w-full"
-              caption={`${piece.category} — ${piece.name}`}
             />
           </div>
 
@@ -62,7 +129,7 @@ export default async function PiecePage({ params }: PiecePageProps) {
               {piece.name}
             </h1>
 
-            <p className="mt-6 max-w-sm text-body leading-relaxed text-ivory/72">
+            <p className="mt-6 max-w-sm text-body leading-relaxed text-ivory/70">
               {piece.description}
             </p>
 
@@ -82,32 +149,81 @@ export default async function PiecePage({ params }: PiecePageProps) {
                 </dd>
               </div>
               <div>
-                <dt className="label text-muted">Price</dt>
-                <dd className="mt-2 display text-[1.25rem] tabular-nums text-gold-bright">
-                  {formatINR(piece.priceINR)}
+                <dt className="label text-muted">Reference</dt>
+                <dd className="mt-2 text-body tabular-nums text-ivory/80">
+                  AU-{piece.slug.slice(0, 3).toUpperCase()}-{String(piece.priceINR).slice(0, 3)}
                 </dd>
               </div>
             </dl>
 
-            <a
-              href={`mailto:atelier@aurelia.example?subject=${encodeURIComponent(`Enquiry — ${piece.name}`)}`}
-              className="label mt-10 inline-flex items-center gap-4 self-start border border-gold/40 px-8 py-4 text-ivory transition-colors duration-[900ms] ease-out-expo hover:border-gold hover:text-gold-bright"
-            >
-              Enquire about this piece
-              <span aria-hidden className="text-gold">
-                →
-              </span>
-            </a>
+            {/* Price, counted up. */}
+            <div className="mt-10 border-t border-line/40 pt-6">
+              <span className="label text-muted">Price</span>
+              <p className="mt-3 display text-[clamp(1.8rem,3.4vw,2.6rem)] tabular-nums text-gold-bright">
+                <PiecePrice value={piece.priceINR} />
+              </p>
+              <p className="mt-2 text-meta text-muted">Inclusive of duties within India.</p>
+            </div>
 
-            <Link
-              href="/#collection"
-              className="label mt-8 inline-flex items-center gap-3 text-muted transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
-            >
-              <span aria-hidden>←</span>
-              Back to the collection
-            </Link>
+            <div className="mt-8 flex flex-col gap-4">
+              <Link
+                href={`/bespoke?piece=${piece.slug}`}
+                className="label inline-flex min-h-[3.25rem] items-center justify-between gap-6 border border-gold/45 px-8 text-ivory transition-colors duration-[900ms] ease-out-expo hover:border-gold hover:text-gold-bright"
+              >
+                Request This Piece
+                <span aria-hidden className="text-gold">
+                  →
+                </span>
+              </Link>
+
+              <Link
+                href="/collections"
+                className="label inline-flex min-h-11 items-center gap-3 text-muted transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+              >
+                <span aria-hidden>←</span>
+                All pieces
+              </Link>
+            </div>
           </div>
         </div>
+
+        {/* Related. */}
+        <section aria-labelledby="related-title" className="mt-24 border-t border-line/30 pt-10">
+          <div className="flex items-baseline justify-between gap-6">
+            <h2 id="related-title" className="label text-gold">
+              Also on the bench
+            </h2>
+            <Link
+              href="/collections"
+              className="label inline-flex min-h-11 items-center text-muted transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+            >
+              View all
+            </Link>
+          </div>
+
+          <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+            {related.map((entry) => (
+              <li key={entry.slug}>
+                <Link href={`/collections/${entry.slug}`} className="group block">
+                  <AssetFrame
+                    src={entry.image}
+                    alt={`${entry.name} — ${entry.stone} in ${entry.metal}.`}
+                    ratio="aspect-[4/5]"
+                    className="w-full"
+                  />
+                  <div className="mt-4 flex items-baseline justify-between gap-4">
+                    <span className="text-meta text-ivory/85 transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
+                      {entry.name}
+                    </span>
+                    <span className="label shrink-0 text-muted tabular-nums">
+                      {formatINR(entry.priceINR)}
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
     </article>
   );

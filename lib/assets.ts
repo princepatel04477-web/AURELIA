@@ -30,6 +30,19 @@ export const CINEMATIC = {
   /** Hero/atmosphere plates reserved for later phases. */
   heroPlate: '/cinematic/hero-plate.jpg',
   introPoster: '/cinematic/intro-poster.jpg',
+  /** Category panels — the `/collections` accordion gallery, one per category. */
+  categoryRings: '/cinematic/category-rings.jpg',
+  categoryPendants: '/cinematic/category-pendants.jpg',
+  categoryEarrings: '/cinematic/category-earrings.jpg',
+  categoryBracelets: '/cinematic/category-bracelets.jpg',
+  categoryNecklaces: '/cinematic/category-necklaces.jpg',
+  /** Open Graph card, 1200×630. Referenced by every route's metadata. */
+  ogImage: '/cinematic/og-aurelia.jpg',
+  /** The commission, in four movements — the `/bespoke` horizontal sequence. */
+  bespoke1: '/cinematic/bespoke-1.jpg',
+  bespoke2: '/cinematic/bespoke-2.jpg',
+  bespoke3: '/cinematic/bespoke-3.jpg',
+  bespoke4: '/cinematic/bespoke-4.jpg',
 } as const;
 
 export const JEWELRY = {
@@ -57,6 +70,31 @@ export const MODELS = {
   ring: '/models/ring.glb',
 } as const;
 
+/**
+ * Per-piece models for the `ModelViewer` on a piece page.
+ *
+ * A piece only gets a viewer when its own `.glb` is delivered; the component
+ * probes first and falls back to the still, so an absent model costs nothing.
+ */
+export const PIECE_MODELS: Readonly<Record<string, string>> = {
+  'aurelia-solitaire': '/models/aurelia-solitaire.glb',
+  'eternity-line-band': '/models/eternity-line-band.glb',
+  'surat-signet': '/models/surat-signet.glb',
+  'emerald-halo-drops': '/models/emerald-halo-drops.glb',
+  'sculpted-hoops': '/models/sculpted-hoops.glb',
+  'pear-luminous-pendant': '/models/pear-luminous-pendant.glb',
+  'line-tennis-bracelet': '/models/line-tennis-bracelet.glb',
+  'polki-choker': '/models/polki-choker.glb',
+};
+
+/** Every per-piece model path, for the audit. */
+export const PIECE_MODEL_PATHS: readonly string[] = Object.values(PIECE_MODELS);
+
+/** The model a piece page may offer, or `undefined` when none is declared. */
+export function modelForSlug(slug: string): string | undefined {
+  return PIECE_MODELS[slug];
+}
+
 /* -------------------------------------------------------------------------
    Fallback chains — consulted left to right, first existing file wins.
    `[]` means "no file fallback": the component must render a CSS plate.
@@ -73,6 +111,18 @@ export const ASSET_FALLBACKS: Readonly<Record<string, readonly string[]>> = {
   [CINEMATIC.introPoster]: [CINEMATIC.heroPlate],
   /** No file fallback: `Ring.tsx` builds the procedural solitaire. */
   [MODELS.ring]: [],
+  [CINEMATIC.categoryRings]: [],
+  [CINEMATIC.categoryPendants]: [],
+  [CINEMATIC.categoryEarrings]: [],
+  [CINEMATIC.categoryBracelets]: [],
+  [CINEMATIC.categoryNecklaces]: [],
+  [CINEMATIC.ogImage]: [],
+  [CINEMATIC.bespoke1]: [],
+  [CINEMATIC.bespoke2]: [],
+  [CINEMATIC.bespoke3]: [],
+  [CINEMATIC.bespoke4]: [],
+  /** Absent model: the piece still stands in for it, so there is nothing to swap to. */
+  ...Object.fromEntries(PIECE_MODEL_PATHS.map((path) => [path, []])),
   [JEWELRY.featured1]: [],
   [JEWELRY.featured2]: [],
   [JEWELRY.featured3]: [],
@@ -97,10 +147,24 @@ export const CODE_IMAGE_PATHS: readonly string[] = [
   JEWELRY.featured2,
   JEWELRY.featured3,
   JEWELRY.featured4,
+  CINEMATIC.categoryRings,
+  CINEMATIC.categoryPendants,
+  CINEMATIC.categoryEarrings,
+  CINEMATIC.categoryBracelets,
+  CINEMATIC.categoryNecklaces,
+  CINEMATIC.bespoke1,
+  CINEMATIC.bespoke2,
+  CINEMATIC.bespoke3,
+  CINEMATIC.bespoke4,
+  CINEMATIC.ogImage,
 ];
 
 /** Everything the app can request, images and the 3D object. */
-export const CODE_ASSET_PATHS: readonly string[] = [...CODE_IMAGE_PATHS, MODELS.ring];
+export const CODE_ASSET_PATHS: readonly string[] = [
+  ...CODE_IMAGE_PATHS,
+  MODELS.ring,
+  ...PIECE_MODEL_PATHS,
+];
 
 /**
  * The declared fallback treatment for any image that never arrives: a dark
@@ -109,6 +173,16 @@ export const CODE_ASSET_PATHS: readonly string[] = [...CODE_IMAGE_PATHS, MODELS.
  */
 export const CSS_PLATE =
   'bg-surface border border-line rounded-xs [background-image:radial-gradient(60%_55%_at_50%_42%,rgba(201,169,97,0.10),transparent_72%)]';
+
+/**
+ * The inline plate in use wherever a vendor component insists on rendering its
+ * own `<img>`: a dark surface with a gold hairline, as a data URI so the element
+ * always has a valid, self-contained source.
+ */
+const PLATE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="g" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#C9A961" stop-opacity="0.14"/><stop offset="0.6" stop-color="#C9A961" stop-opacity="0.03"/><stop offset="1" stop-color="#0A0907" stop-opacity="0"/></radialGradient></defs><rect width="800" height="1000" fill="#14110D"/><rect width="800" height="1000" fill="url(#g)"/><rect x="24" y="24" width="752" height="952" fill="none" stroke="#C9A961" stroke-opacity="0.22"/></svg>';
+
+export const PLATE_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PLATE_SVG)}`;
 
 /** The declared CSS stand-in for the fire plate: a gold glow at 8% on --bg. */
 export const FIRE_PLATE_STYLE = {

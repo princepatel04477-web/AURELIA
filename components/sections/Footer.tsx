@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
 import { createTimeline, type Timeline } from 'animejs';
 import { STAGE_PAUSE_EVENT } from '@/components/three/CameraRig';
+import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 /**
@@ -56,6 +57,9 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | undefined>(undefined);
   const [subscribed, setSubscribed] = useState(false);
+
+  // Silk is a WebGL surface; it asks the shared budget before it mounts.
+  const silkSlot = useAnimatingCanvasSlot('silk', visible);
 
   // Silk only runs while the footer is on screen; the stage keeps its slot.
   useEffect(() => {
@@ -142,7 +146,7 @@ export function Footer() {
             backgroundImage: 'linear-gradient(160deg, #2A2116 0%, #14110D 58%, #0A0907 100%)',
           }}
         />
-        {visible ? (
+        {visible && silkSlot ? (
           <div className="absolute inset-0 opacity-[0.55]">
             <Silk
               speed={0.22}
@@ -201,7 +205,7 @@ export function Footer() {
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="text-meta text-ivory/70 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+                      className="inline-flex min-h-11 items-center text-meta text-ivory/70 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
                     >
                       {link.label}
                     </a>
@@ -223,7 +227,7 @@ export function Footer() {
               <span className="text-meta text-ivory/70">By appointment</span>
               <a
                 href="mailto:atelier@aurelia.example"
-                className="text-meta text-ivory/70 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+                className="inline-flex min-h-11 items-center text-meta text-ivory/70 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
               >
                 atelier@aurelia.example
               </a>
@@ -265,11 +269,11 @@ export function Footer() {
                     }}
                     aria-invalid={Boolean(error)}
                     aria-describedby={error ? 'footer-email-error' : undefined}
-                    className="w-full appearance-none border-0 bg-transparent text-meta text-ivory outline-none placeholder:text-muted/60"
+                    className="min-h-11 w-full appearance-none border-0 bg-transparent text-meta text-ivory outline-none placeholder:text-muted/60"
                   />
                   <button
                     type="submit"
-                    className="label shrink-0 text-ivory/80 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+                    className="label inline-flex min-h-11 shrink-0 items-center px-1 text-ivory/80 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
                   >
                     Join
                   </button>

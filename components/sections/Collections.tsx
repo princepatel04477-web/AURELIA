@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createTimeline, stagger, type Timeline } from 'animejs';
 import { ChapterCard } from '@/components/chrome/ChapterCard';
 import { setStageShot, STAGE_PAUSE_EVENT } from '@/components/three/CameraRig';
+import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import {
   CATEGORIES,
@@ -97,6 +98,11 @@ export default function Collections() {
   const [category, setCategory] = useState<CategoryFilter>('All');
   const [focused, setFocused] = useState(0);
   const [setVisible, setSetVisible] = useState(true);
+  const [inView, setInView] = useState(false);
+
+  // The carousel is a third WebGL context: it only mounts when the section is on
+  // screen and a slot is free, and gives the slot back the moment it scrolls off.
+  const carouselSlot = useAnimatingCanvasSlot('carousel', inView && !compact && setVisible);
 
   const pieces = useMemo(() => piecesForCategory(category), [category]);
   const images = usePieceImages(pieces);
@@ -113,6 +119,7 @@ export default function Collections() {
         if (!entry) return;
         const visible = entry.isIntersecting;
 
+        setInView(visible);
         setStageShot(visible ? 'collection' : null);
         window.dispatchEvent(
           new CustomEvent(STAGE_PAUSE_EVENT, { detail: { paused: visible } })
@@ -241,7 +248,7 @@ export default function Collections() {
                   role="tab"
                   aria-selected={active}
                   onClick={() => changeCategory(entry)}
-                  className="group relative pb-1"
+                  className="group relative inline-flex min-h-11 items-end pb-1"
                 >
                   <span
                     className={`label transition-colors duration-[900ms] ease-out-expo ${
@@ -274,7 +281,7 @@ export default function Collections() {
           />
         ) : (
           <div className="relative h-[clamp(22rem,46vw,34rem)] w-full">
-            {images ? (
+            {images && carouselSlot ? (
               <CircularCarousel
                 items={pieces.map((piece) => ({
                   src: images[piece.image] ?? PLATE_URI,
@@ -350,7 +357,7 @@ export default function Collections() {
               <a
                 data-caption-line
                 href={`/collections/${focusedPiece.slug}`}
-                className="label group inline-flex items-center gap-3 text-ivory/80 opacity-0 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+                className="label group inline-flex min-h-11 items-center gap-3 text-ivory/80 opacity-0 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
               >
                 View the piece
                 <span aria-hidden className="text-gold">

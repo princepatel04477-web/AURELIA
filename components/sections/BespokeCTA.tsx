@@ -84,7 +84,19 @@ function validate(fields: Fields): Errors {
   return errors;
 }
 
-export default function BespokeCTA() {
+/** What a piece page may hand the form when it sends a visitor here. */
+export type BespokePrefill = {
+  /** One of `INTERESTS`, ignored if it is not. */
+  interest?: string;
+  /** The enquiry line, trimmed to the field's limit. */
+  message?: string;
+};
+
+type BespokeCTAProps = {
+  prefill?: BespokePrefill;
+};
+
+export default function BespokeCTA({ prefill }: BespokeCTAProps) {
   const reducedMotion = useReducedMotion();
   const sectionRef = useRef<HTMLElement>(null);
   const frameRef = useRef<SVGSVGElement>(null);
@@ -95,7 +107,13 @@ export default function BespokeCTA() {
   const checkAnimation = useRef<JSAnimation | null>(null);
   const collapseTimeline = useRef<Timeline | null>(null);
 
-  const [fields, setFields] = useState<Fields>(EMPTY);
+  const [fields, setFields] = useState<Fields>(() => ({
+    ...EMPTY,
+    interest: (INTERESTS as readonly string[]).includes(prefill?.interest ?? '')
+      ? (prefill?.interest as Interest)
+      : '',
+    message: prefill?.message?.slice(0, 600) ?? '',
+  }));
   const [errors, setErrors] = useState<Errors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof Fields, boolean>>>({});
   const [status, setStatus] = useState<'idle' | 'sending' | 'collapsing' | 'sent'>('idle');
@@ -273,7 +291,7 @@ export default function BespokeCTA() {
 
   const fieldClass = (key: keyof Fields) =>
     [
-      'w-full appearance-none border-0 border-b bg-transparent pb-2 text-body text-ivory outline-none',
+      'min-h-11 w-full appearance-none border-0 border-b bg-transparent pb-2 text-body text-ivory outline-none',
       'transition-colors duration-[900ms] ease-out-expo',
       errors[key] ? 'border-destructive' : 'border-line focus:border-gold',
     ].join(' ');

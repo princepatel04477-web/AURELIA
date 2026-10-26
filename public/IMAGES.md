@@ -72,12 +72,29 @@ Until a file is delivered, the component that uses it must render its `--surface
 | `atelier-hands.jpg` | Interlude plate — the work itself | 16:9 | Interlude, between III and IV (`ScrollExpand`) | A jeweller's hands setting a diamond under a loupe lamp |
 | `menu-editorial.jpg` | Full-screen menu journal column | 3:4 | Navbar menu | Atelier detail, vertical crop |
 | `og-aurelia.jpg` | Open Graph card (1200×630) | 1.91:1 | Metadata | Wordmark over a single stone |
+| `category-rings.jpg` | `/collections` accordion panel — Rings | 3:4 | Collections index | Solitaire and band on black |
+| `category-pendants.jpg` | `/collections` accordion panel — Pendants | 3:4 | Collections index | Pear pendant on a gold chain |
+| `category-earrings.jpg` | `/collections` accordion panel — Earrings | 3:4 | Collections index | Emerald drops, side light |
+| `category-bracelets.jpg` | `/collections` accordion panel — Bracelets | 3:4 | Collections index | Line bracelet, clasp detail |
+| `category-necklaces.jpg` | `/collections` accordion panel — Necklaces | 3:4 | Collections index | Polki choker on dark ground |
+| `bespoke-1.jpg` | Commission I — Consult | 4:5 | `/bespoke` | Two hands over a tray of loose stones |
+| `bespoke-2.jpg` | Commission II — Sketch | 4:5 | `/bespoke` | Graphite drawing of a setting on paper |
+| `bespoke-3.jpg` | Commission III — Craft | 4:5 | `/bespoke` | Piercing saw at the bench, gold dust |
+| `bespoke-4.jpg` | Commission IV — Deliver | 4:5 | `/bespoke` | Finished piece in a closed hand, low light |
 
 ## /public/models/ — the object
 
 | File | Role | Format | Used by | Note |
 |---|---|---|---|---|
 | `ring.glb` | Hero ring, the real model | glTF 2.0 binary | 3D hero — `components/three/Ring.tsx` via `useGLTF` | ≤ 2 MB, Draco, PBR gold, Y-up. Absent → the procedural solitaire stands in. |
+| `aurelia-solitaire.glb` | Piece model | glTF 2.0 binary | `/collections/aurelia-solitaire` — `ModelViewer` | Absent → `TiltedCard` with the piece still. |
+| `eternity-line-band.glb` | Piece model | glTF 2.0 binary | `/collections/eternity-line-band` — `ModelViewer` | Same fallback. |
+| `surat-signet.glb` | Piece model | glTF 2.0 binary | `/collections/surat-signet` — `ModelViewer` | Same fallback. |
+| `emerald-halo-drops.glb` | Piece model | glTF 2.0 binary | `/collections/emerald-halo-drops` — `ModelViewer` | Same fallback. |
+| `sculpted-hoops.glb` | Piece model | glTF 2.0 binary | `/collections/sculpted-hoops` — `ModelViewer` | Same fallback. |
+| `pear-luminous-pendant.glb` | Piece model | glTF 2.0 binary | `/collections/pear-luminous-pendant` — `ModelViewer` | Same fallback. |
+| `line-tennis-bracelet.glb` | Piece model | glTF 2.0 binary | `/collections/line-tennis-bracelet` — `ModelViewer` | Same fallback. |
+| `polki-choker.glb` | Piece model | glTF 2.0 binary | `/collections/polki-choker` — `ModelViewer` | Same fallback. |
 
 `cinematic/ring-model.glb` above stays reserved for the React Bits `ModelViewer`; the hero canvas reads
 `models/ring.glb` first and only that path is treated as the hero object.
@@ -109,6 +126,9 @@ appear in code. The rule is enforced, not just documented:
 | `featured-1..4.webp` | Any missing angle is replaced by an inline plate (dark surface, gold hairline) before the slider mounts, so the WebGL slider never points at a 404. | Same fixed frame, no `<img>`, no shift. |
 | Any plate after `webglcontextlost` | The stage fades out and the current section's `chapter-*.jpg` plate takes the frame; if that file is absent, its CSS plate does. |
 | `ring.glb` | The procedural solitaire in `components/three/Ring.tsx` stands in. |
+| `category-*.jpg` | The accordion panel keeps its label over the `--surface` plate — no `<img>`, no glyph. |
+| `bespoke-1..4.jpg` | The step keeps its drawn frame and caption; the plate is the same reserved 4:5 box. |
+| `models/<slug>.glb` | The piece page renders `TiltedCard` with the piece still instead of `ModelViewer`. |
 | Product cards (Phase 4) | Dark `--surface` card + hairline frame, fixed aspect ratio so nothing shifts. |
 
 ## Technical contract

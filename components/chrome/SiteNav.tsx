@@ -118,7 +118,7 @@ export function SiteNav() {
         <div className="pointer-events-auto flex w-full items-center justify-between px-[clamp(1.25rem,5vw,5rem)] pt-[2.4vh]">
           <Link
             href="/"
-            className="label tracking-[0.42em] text-ivory/90 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
+            className="label inline-flex min-h-11 items-center tracking-[0.42em] text-ivory/90 transition-colors duration-[900ms] ease-out-expo hover:text-gold-bright"
           >
             Aurelia
           </Link>
@@ -129,7 +129,7 @@ export function SiteNav() {
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls="site-menu"
-            className="group flex items-center gap-4"
+            className="group flex min-h-11 items-center gap-4"
           >
             <span className="label text-ivory/80 transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
               {open ? 'Close' : 'Menu'}

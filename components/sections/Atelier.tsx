@@ -47,7 +47,7 @@ export function Atelier() {
 
             <a
               href="#collection"
-              className="group mt-10 inline-flex items-center gap-5"
+              className="group mt-10 inline-flex min-h-11 items-center gap-5"
             >
               <span className="label text-ivory/85 transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
                 Return to the collection
