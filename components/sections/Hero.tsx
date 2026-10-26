@@ -9,7 +9,8 @@ import {
   useCameraRigStore,
 } from '@/components/three/CameraRigContext';
 import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
-import { useWebGL2Support } from '@/components/three/useViewportTier';
+import { useViewportTier, useWebGL2Support } from '@/components/three/useViewportTier';
+import { HeroPlate } from '@/components/three/HeroPlate';
 
 /**
  * Title card.
@@ -59,12 +60,11 @@ function HeroFrame() {
   }, []);
 
   // No WebGL, no dolly: settle quickly so the type is never held hostage.
-  const markSettled = rig.markSettled;
+  const markWebglUnavailable = rig.markWebglUnavailable;
   useEffect(() => {
-    if (!webgl.ready || webgl.supported) return undefined;
-    const timer = window.setTimeout(() => markSettled(), 900);
-    return () => window.clearTimeout(timer);
-  }, [webgl.ready, webgl.supported, markSettled]);
+    if (!webgl.ready) return;
+    if (!webgl.supported) markWebglUnavailable();
+  }, [webgl.ready, webgl.supported, markWebglUnavailable]);
 
   // Ring settles → wordmark fades up → the line arrives letter by letter.
   useEffect(() => {
@@ -165,11 +165,17 @@ function HeroFrame() {
         canvas is composited as light, never as an opaque card, so the wordmark
         can never be buried by a black frame.
       */}
+      {/* The still that carries the film when WebGL is absent or dies. */}
+      <HeroPlate visible={webgl.ready && (!webgl.supported || rig.contextLost)} />
+
       <div
-        className="pointer-events-none fixed inset-0 z-20"
-        style={{ mixBlendMode: 'screen' }}
+        className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-[1400ms] ease-out-expo"
+        style={{
+          mixBlendMode: 'screen',
+          opacity: webgl.supported && !rig.contextLost ? 1 : 0,
+        }}
       >
-        <Stage />
+        {webgl.ready && webgl.supported && !rig.contextLost ? <Stage /> : null}
       </div>
 
       {/* Copy: a small-caps line and one link. */}
@@ -190,7 +196,7 @@ function HeroFrame() {
           <a
             ref={linkRef}
             href="#collection"
-            className="group pointer-events-auto inline-flex translate-y-2 items-center gap-5 opacity-0 focus-visible:outline-offset-8"
+            className="group pointer-events-auto inline-flex min-h-11 translate-y-2 items-center gap-5 opacity-0 focus-visible:outline-offset-8"
           >
             <span className="label text-ivory/85 transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
               Enter the Collection
@@ -220,37 +226,65 @@ function HeroFrame() {
  * field takes over so the hero is never flat black.
  */
 function RaysLayer({ supported }: { supported: boolean }) {
-  const hasSlot = useAnimatingCanvasSlot('rays', supported);
+  const holder = useRef<HTMLDivElement>(null);
+  const [onScreen, setOnScreen] = useState(true);
+  const hasSlot = useAnimatingCanvasSlot('rays', supported && onScreen);
+  const { isMobile } = useViewportTier();
 
-  if (!supported || !hasSlot) return <LightFallback />;
+  // A slot is a loan, not a deed: the rays hand theirs back once the hero leaves.
+  useEffect(() => {
+    const node = holder.current;
+    if (!node) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry) setOnScreen(entry.isIntersecting);
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  if (!supported || !hasSlot) {
+    return (
+      <div ref={holder} className="h-full w-full">
+        <LightFallback />
+      </div>
+    );
+  }
 
   return (
-    <LightRays
-      raysOrigin="top-center"
-      raysColor="#EBD8A6"
-      raysSpeed={0.28}
-      lightSpread={0.44}
-      rayLength={2.6}
-      rayDensity={0.85}
-      tilt={0}
-      raySharpness={0.72}
-      glow={0.34}
-      haze={0.16}
-      atmosphere={0.55}
-      intensity={0.5}
-      saturation={0.35}
-      fadeDistance={1.1}
-      noiseAmount={0.05}
-      distortion={0.02}
-      pulsating={false}
-      followMouse={false}
-      clickPulse={false}
-      cursorShadow={false}
-      intro
-      opacity={0.9}
-      maxDevicePixelRatio={1.5}
-      className="h-full w-full"
-    />
+    <div ref={holder} className="h-full w-full">
+      <LightRays
+        raysOrigin="top-center"
+        raysColor="#EBD8A6"
+        raysSpeed={0.28}
+        lightSpread={0.44}
+        rayLength={2.6}
+        rayDensity={0.85}
+        tilt={0}
+        raySharpness={0.72}
+        glow={0.34}
+        haze={0.16}
+        atmosphere={0.55}
+        intensity={0.5}
+        saturation={0.35}
+        fadeDistance={1.1}
+        noiseAmount={0.05}
+        distortion={0.02}
+        pulsating={false}
+        followMouse={false}
+        clickPulse={false}
+        cursorShadow={false}
+        intro
+        opacity={0.9}
+        maxDevicePixelRatio={isMobile ? 1.25 : 1.5}
+        className="h-full w-full"
+      />
+    </div>
   );
 }
 

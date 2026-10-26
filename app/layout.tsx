@@ -3,9 +3,13 @@ import { cormorant, inter } from './fonts';
 import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
 import { NoiseOverlay } from '@/components/chrome/NoiseOverlay';
 import { Letterbox } from '@/components/chrome/Letterbox';
+import { SiteNav } from '@/components/chrome/SiteNav';
+import { PageTransition } from '@/components/cinematic/PageTransition';
+import { Footer } from '@/components/sections/Footer';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://aurelia.example'),
   title: {
     default: 'AURELIA — Fine Jewellery, Surat',
     template: '%s — AURELIA',
@@ -18,9 +22,24 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'AURELIA — Fine Jewellery, Surat',
     description: 'Diamonds cut by hand, set in gold, made to be inherited.',
+    url: '/',
+    siteName: 'AURELIA',
     type: 'website',
     locale: 'en_IN',
-    siteName: 'AURELIA',
+    images: [
+      {
+        url: '/cinematic/og-aurelia.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'AURELIA — Fine Jewellery, Surat',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AURELIA — Fine Jewellery, Surat',
+    description: 'Diamonds cut by hand, set in gold, made to be inherited.',
+    images: ['/cinematic/og-aurelia.jpg'],
   },
   robots: { index: true, follow: true },
 };
@@ -45,11 +64,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </a>
 
           <Letterbox />
+          <PageTransition />
+          <SiteNav />
           <NoiseOverlay />
 
           <main id="main" className="relative">
             {children}
           </main>
+
+          <Footer />
         </SmoothScrollProvider>
       </body>
     </html>

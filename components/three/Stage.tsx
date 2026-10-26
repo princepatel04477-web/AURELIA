@@ -1,8 +1,9 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useCameraRig } from './CameraRigContext';
+import { STAGE_PAUSE_EVENT, type StagePauseDetail } from './CameraRig';
 import { useAnimatingCanvasSlot } from './canvasPolicy';
 import { useViewportTier } from './useViewportTier';
 import { INTRO_SHOT } from './shots';
@@ -19,14 +20,19 @@ import { Effects } from './Effects';
  *
  * Perf gates:
  *   • one of the two animating WebGL slots (see `canvasPolicy.ts`)
- *   • `frameloop` drops to `demand` when the hero is scrolled out of frame or
- *     the tab is hidden, so the ring keeps its context but burns no frames
+ *   • `frameloop` stays at `demand` until the intro starts, then drops back to
+ *     `demand` when the hero is scrolled out of frame or the tab is hidden —
+ *     the ring keeps its context but burns no frames
+ *   • `webglcontextlost` is reported to the rig, which swaps in a still plate.
+ *     Nothing is restored automatically: a dead context is a still frame.
  */
 export default function Stage() {
   const { isMobile } = useViewportTier();
   const rig = useCameraRig();
   const hasSlot = useAnimatingCanvasSlot('stage');
   const [awake, setAwake] = useState(true);
+  /** Parked by another surface on screen (see STAGE_PAUSE_EVENT). */
+  const [parked, setParked] = useState(false);
 
   useEffect(() => {
     const sync = () => {
@@ -44,6 +50,18 @@ export default function Stage() {
     };
   }, []);
 
+  // Two-canvas rule: a section that mounts its own WebGL surface asks the stage
+  // to stop rendering while it is on screen. The context stays alive, no frames.
+  useEffect(() => {
+    const onPause = (event: Event) => {
+      const detail = (event as CustomEvent<StagePauseDetail>).detail;
+      setParked(Boolean(detail?.paused));
+    };
+
+    window.addEventListener(STAGE_PAUSE_EVENT, onPause);
+    return () => window.removeEventListener(STAGE_PAUSE_EVENT, onPause);
+  }, []);
+
   if (!hasSlot) return null;
 
   return (
@@ -51,10 +69,26 @@ export default function Stage() {
       dpr={isMobile ? [1, 1.5] : [1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={{ position: INTRO_SHOT.position, fov: INTRO_SHOT.fov, near: 0.1, far: 80 }}
-      frameloop={rig.reducedMotion ? 'demand' : awake ? 'always' : 'demand'}
+      frameloop={
+        !rig.introComplete || rig.reducedMotion || parked ? 'demand' : awake ? 'always' : 'demand'
+      }
       style={{ pointerEvents: 'none', background: 'transparent' }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 1.05;
+
+        const canvas = gl.domElement;
+        const onLost = () => {
+          rig.markContextLost();
+        };
+        const onRestored = () => {
+          rig.markContextRestored();
+        };
+
+        canvas.addEventListener('webglcontextlost', onLost);
+        canvas.addEventListener('webglcontextrestored', onRestored);
+
+        // React Three Fiber owns the canvas for the life of the stage; these
+        // listeners die with the element, so no manual teardown is needed here.
       }}
     >
       <CameraRig />
@@ -75,9 +109,46 @@ export default function Stage() {
 
       <Suspense fallback={null}>
         <Ring isMobile={isMobile} />
+        <StageReady />
       </Suspense>
 
       <Effects isMobile={isMobile} />
     </Canvas>
   );
+}
+
+/**
+ * Reports the first *rendered* frame to the DOM layer.
+ *
+ * It sits inside the Ring's Suspense boundary, so it only starts counting once
+ * the object (model or procedural) is in the scene — and it reports from
+ * `useFrame`, i.e. after the frame that actually contains the ring. The dolly-in
+ * never starts over an empty stage, and never waits longer than the fallback.
+ */
+function StageReady() {
+  const markStageReady = useCameraRig().markStageReady;
+  const invalidate = useThree((state) => state.invalidate);
+  const reported = useRef(false);
+
+  // The stage runs at `demand` until the intro starts, so ask for a frame
+  // explicitly — otherwise nothing would ever be rendered to report.
+  useEffect(() => {
+    let frames = 0;
+    let raf = 0;
+    const pump = () => {
+      invalidate();
+      frames += 1;
+      if (frames < 8 && !reported.current) raf = requestAnimationFrame(pump);
+    };
+    pump();
+    return () => cancelAnimationFrame(raf);
+  }, [invalidate]);
+
+  useFrame(() => {
+    if (reported.current) return;
+    reported.current = true;
+    markStageReady();
+  });
+
+  return null;
 }

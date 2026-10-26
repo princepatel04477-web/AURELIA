@@ -25,9 +25,18 @@ import { useWebGLSlot } from '@/components/providers/WebGLBudget';
  */
 export const ANIMATING_CANVAS_LIMIT = 2;
 
-export type AnimatingCanvasId = 'stage' | 'rays';
+export type AnimatingCanvasId = 'stage' | 'rays' | 'carousel' | 'silk' | 'piece';
+
+/** Human-readable reason each surface exists, for the audit trail. */
+export const CANVAS_REGISTER: Readonly<Record<AnimatingCanvasId, string>> = {
+  stage: 'Hero — the persistent ring (R3F)',
+  rays: 'Hero — LightRays backdrop',
+  carousel: 'Chapter V — CircularCarousel (ogl)',
+  silk: 'Footer — Silk (ogl)',
+  piece: 'Piece page — ModelViewer (R3F)',
+};
 
 /** Reserve one of the two animating slots. Returns false when the budget is full. */
 export function useAnimatingCanvasSlot(id: AnimatingCanvasId, request = true): boolean {
-  return useWebGLSlot(`hero:${id}`, request);
+  return useWebGLSlot(`canvas:${id}`, request);
 }

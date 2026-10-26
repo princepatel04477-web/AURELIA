@@ -10,9 +10,10 @@ import {
   PRONG_ANGLES,
   STONE,
 } from './ringGeometry';
+import { MODELS } from '@/lib/assets';
 
 /** A real model always wins; the procedural solitaire is the stand-in. */
-const MODEL_PATH = '/models/ring.glb';
+const MODEL_PATH = MODELS.ring;
 
 type RingProps = {
   isMobile: boolean;

@@ -43,6 +43,10 @@ Until a file is delivered, the component that uses it must render its `--surface
 | `atelier-bench.jpg` | Bench, tools, unset stones (process) | 3:2 | Chapter III — The Hand | Jeweller's bench with tools and loose stones |
 | `stone-macro.jpg` | Loose brilliant, inclusion detail | 1:1 | Chapter II — The Stone | Macro of a loose brilliant-cut diamond |
 | `hand-model.jpg` | Worn scale — ring on hand, low light | 4:5 | CTA / Call to Buy | Hand wearing a gold ring in low light |
+| `featured-1.webp` | Featured piece — three-quarter hero angle | 4:5 | Chapter VI — The One | Featured solitaire, three-quarter view |
+| `featured-2.webp` | Featured piece — profile, band and gallery | 4:5 | Chapter VI — The One | Featured solitaire, profile |
+| `featured-3.webp` | Featured piece — top-down on the stone | 4:5 | Chapter VI — The One | Featured solitaire, top view |
+| `featured-4.webp` | Featured piece — macro of the setting | 4:5 | Chapter VI — The One | Featured solitaire, setting macro |
 
 ## /public/cinematic/ — the atmosphere
 
@@ -50,7 +54,8 @@ Until a file is delivered, the component that uses it must render its `--surface
 |---|---|---|---|---|
 | `hero-plate.jpg` | Hero backdrop fallback still (behind WebGL intro) | 16:9 | Hero | Dark studio interior with a single warm light |
 | `intro-poster.jpg` | Poster frame for the WebGL intro on slow devices | 16:9 | Preloader | Abstract gold light in black |
-| `chapter-light.jpg` | Chapter I backing plate, light through fabric | 3:2 | Chapter I | Warm light falling through dark fabric |
+| `chapter-light.jpg` | Chapter I backing plate, light through fabric | 3:2 | Chapter I, hero plate fallback | Warm light falling through dark fabric |
+| `chapter-fire.jpg` | Chapter III backing plate — the crucible | 16:9 | Chapter III — The Fire | Molten gold poured into a crucible, sparks rising, dark foundry |
 | `chapter-stone.jpg` | Chapter II backing plate, stone texture | 3:2 | Chapter II | Macroscopic crystalline texture |
 | `chapter-hand.jpg` | Chapter III backing plate, hands at work | 3:2 | Chapter III | Hands working at a jeweller's bench |
 | `chapter-vow.jpg` | Chapter IV backing plate, drapery | 3:2 | Chapter IV | Ivory silk drapery in low light |
@@ -63,16 +68,76 @@ Until a file is delivered, the component that uses it must render its `--surface
 | `ring-model.glb` | Hero ring — low-poly, 4k maps, < 2 MB | — | 3D hero | Drachma-style solitaire, PBR gold |
 | `ring-normal.jpg` | Ring normal map | 1:1 | 3D hero | Tangent-space normal |
 | `ring-metal.jpg` | Ring metalness/roughness map | 1:1 | 3D hero | Gold roughness variation |
+| `gold-texture.jpg` | Molten gold surface — the fill for chapter headlines | 16:9 | Chapters II–IV headlines (`MaskedHeading`) | Abstract macro of a molten gold surface |
+| `atelier-hands.jpg` | Interlude plate — the work itself | 16:9 | Interlude, between III and IV (`ScrollExpand`) | A jeweller's hands setting a diamond under a loupe lamp |
 | `menu-editorial.jpg` | Full-screen menu journal column | 3:4 | Navbar menu | Atelier detail, vertical crop |
 | `og-aurelia.jpg` | Open Graph card (1200×630) | 1.91:1 | Metadata | Wordmark over a single stone |
+| `category-rings.jpg` | `/collections` accordion panel — Rings | 3:4 | Collections index | Solitaire and band on black |
+| `category-pendants.jpg` | `/collections` accordion panel — Pendants | 3:4 | Collections index | Pear pendant on a gold chain |
+| `category-earrings.jpg` | `/collections` accordion panel — Earrings | 3:4 | Collections index | Emerald drops, side light |
+| `category-bracelets.jpg` | `/collections` accordion panel — Bracelets | 3:4 | Collections index | Line bracelet, clasp detail |
+| `category-necklaces.jpg` | `/collections` accordion panel — Necklaces | 3:4 | Collections index | Polki choker on dark ground |
+| `bespoke-1.jpg` | Commission I — Consult | 4:5 | `/bespoke` | Two hands over a tray of loose stones |
+| `bespoke-2.jpg` | Commission II — Sketch | 4:5 | `/bespoke` | Graphite drawing of a setting on paper |
+| `bespoke-3.jpg` | Commission III — Craft | 4:5 | `/bespoke` | Piercing saw at the bench, gold dust |
+| `bespoke-4.jpg` | Commission IV — Deliver | 4:5 | `/bespoke` | Finished piece in a closed hand, low light |
+
+## /public/models/ — the object
+
+| File | Role | Format | Used by | Note |
+|---|---|---|---|---|
+| `ring.glb` | Hero ring, the real model | glTF 2.0 binary | 3D hero — `components/three/Ring.tsx` via `useGLTF` | ≤ 2 MB, Draco, PBR gold, Y-up. Absent → the procedural solitaire stands in. |
+| `aurelia-solitaire.glb` | Piece model | glTF 2.0 binary | `/collections/aurelia-solitaire` — `ModelViewer` | Absent → `TiltedCard` with the piece still. |
+| `eternity-line-band.glb` | Piece model | glTF 2.0 binary | `/collections/eternity-line-band` — `ModelViewer` | Same fallback. |
+| `surat-signet.glb` | Piece model | glTF 2.0 binary | `/collections/surat-signet` — `ModelViewer` | Same fallback. |
+| `emerald-halo-drops.glb` | Piece model | glTF 2.0 binary | `/collections/emerald-halo-drops` — `ModelViewer` | Same fallback. |
+| `sculpted-hoops.glb` | Piece model | glTF 2.0 binary | `/collections/sculpted-hoops` — `ModelViewer` | Same fallback. |
+| `pear-luminous-pendant.glb` | Piece model | glTF 2.0 binary | `/collections/pear-luminous-pendant` — `ModelViewer` | Same fallback. |
+| `line-tennis-bracelet.glb` | Piece model | glTF 2.0 binary | `/collections/line-tennis-bracelet` — `ModelViewer` | Same fallback. |
+| `polki-choker.glb` | Piece model | glTF 2.0 binary | `/collections/polki-choker` — `ModelViewer` | Same fallback. |
+
+`cinematic/ring-model.glb` above stays reserved for the React Bits `ModelViewer`; the hero canvas reads
+`models/ring.glb` first and only that path is treated as the hero object.
 
 ---
+
+## Single source of truth — read this before adding an image
+
+**This file is the only place an image path may be introduced.** A path that is not in this table must not
+appear in code. The rule is enforced, not just documented:
+
+- `/lib/assets.ts` mirrors this table as typed constants (`CINEMATIC`, `JEWELRY`) and exposes
+  `CODE_IMAGE_PATHS` — every image path the app can request — plus `ASSET_FALLBACKS`.
+- `auditAssets()` (dev only) diffs three things and returns them separately:
+  `manifestOnly` (listed here, not used yet), `missing` (referenced in code, absent from `/public`),
+  and `uncovered` (missing **and** without a fallback). The build is only honest when
+  `uncovered` is empty.
+- Extension convention: **cinematic plates are `.jpg`.** Do not switch a delivered file to `.webp`
+  (or the reverse) without changing this table first — the audit keys off exact filenames.
+
+### Fallbacks — required for every entry used in code
+
+| Asset | When absent |
+|---|---|
+| `gold-texture.jpg` | Headline renders with the CSS gold gradient fill (`#C9A961 → #EBD8A6`). No swap, no shift: the gradient heading stays in normal flow, the textured heading is an absolutely-positioned overlay. |
+| `atelier-hands.jpg` | Falls back to `chapter-hand.jpg`; if that is absent too, a dark `--surface` plate inside a 1px hairline frame, caption intact. Never an `<img>` with a broken source. |
+| `chapter-*.jpg` stills | Rendered as a CSS `background-image` over `--surface`, so a missing plate is simply a darker frame — no broken-image glyph, no reflow. |
+| `chapter-fire.jpg` | CSS plate: radial `#C9A961` glow at 8% on `--bg`.
+| `featured-1..4.webp` | Any missing angle is replaced by an inline plate (dark surface, gold hairline) before the slider mounts, so the WebGL slider never points at a 404. | Same fixed frame, no `<img>`, no shift. |
+| Any plate after `webglcontextlost` | The stage fades out and the current section's `chapter-*.jpg` plate takes the frame; if that file is absent, its CSS plate does. |
+| `ring.glb` | The procedural solitaire in `components/three/Ring.tsx` stands in. |
+| `category-*.jpg` | The accordion panel keeps its label over the `--surface` plate — no `<img>`, no glyph. |
+| `bespoke-1..4.jpg` | The step keeps its drawn frame and caption; the plate is the same reserved 4:5 box. |
+| `models/<slug>.glb` | The piece page renders `TiltedCard` with the piece still instead of `ModelViewer`. |
+| Product cards (Phase 4) | Dark `--surface` card + hairline frame, fixed aspect ratio so nothing shifts. |
 
 ## Technical contract
 
 - **Hero plate**: 2400 × 1350 minimum, ≤ 420 KB AVIF.
 - **Product stills**: 1600 px on the long edge, ≤ 260 KB each.
-- **Textures** (`gold-foil`, `env-studio`): power-of-two where possible; HDR ≤ 1 MB.
+- **Textures** (`gold-texture`, `gold-foil`, `env-studio`): power-of-two where possible; HDR ≤ 1 MB.
+- **`gold-texture.jpg` / `atelier-hands.jpg` / `chapter-fire.jpg`**: all 16:9, 2400 × 1350, ≤ 320 KB — they
+  run full-bleed behind pinned type, so banding and visible compression blocks are disqualifying.
 - **GLB**: ≤ 2 MB, Draco-compressed, PBR Metallic-Roughness, Y-up, real-world scale in mm.
 - Every `<Image>` needs `alt` text drawn from this table, explicit `width`/`height` (or `fill` + `sizes`),
   and `loading="lazy"` except the hero plate.
@@ -83,3 +148,6 @@ Until a file is delivered, the component that uses it must render its `--surface
 Drop files into `/public/jewelry/` and `/public/cinematic/` with the exact names above.
 Missing files are tolerated by the components (fallback plate), but the final QA pass
 compares this manifest against the folder contents 1:1.
+
+A delivery is accepted only when `auditAssets().uncovered` is empty — i.e. every path the code
+requests either exists on disk or has a declared fallback in the table above.
