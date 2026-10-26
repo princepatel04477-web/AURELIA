@@ -1,19 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { createTimeline, type Timeline } from 'animejs';
 import { usePathname } from 'next/navigation';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 const OPEN = '6vh';
-const CLOSED = '50vh';
 
 /**
  * Cinematic chrome.
  *
- * The frame arrives closed (a black screen split in two), opens to 6vh bars on
- * first load, and closes again on every route change — the film cuts, the frame
- * shuts, then it opens on the next chapter.
+ * Cinematic 6vh letterbox bars framing the viewport top and bottom.
+ * On first load and route changes, the label gently fades in.
  */
 export function Letterbox() {
   const reducedMotion = useReducedMotion();
@@ -23,7 +21,6 @@ export function Letterbox() {
   const labelRef = useRef<HTMLDivElement | null>(null);
   const timelineRef = useRef<Timeline | null>(null);
   const firstLoad = useRef(true);
-  const [opening, setOpening] = useState(true);
 
   useEffect(() => {
     const top = topRef.current;
@@ -31,27 +28,23 @@ export function Letterbox() {
     const label = labelRef.current;
     if (!top || !bottom) return;
 
-    timelineRef.current?.revert();
+    top.style.height = OPEN;
+    bottom.style.height = OPEN;
 
     if (reducedMotion) {
-      top.style.height = OPEN;
-      bottom.style.height = OPEN;
       if (label) label.style.opacity = '1';
-      setOpening(false);
       return;
     }
 
+    timelineRef.current?.revert();
+
     const timeline = createTimeline({
-      defaults: { ease: 'outExpo', duration: 1400 },
+      defaults: { ease: 'outExpo', duration: 1200 },
     });
 
     timelineRef.current = timeline;
 
-    timeline
-      .add([top, bottom], { height: OPEN, duration: 1600 }, 240)
-      .add([label], { opacity: [0, 1], duration: 900, ease: 'inOutQuart' }, 900);
-
-    setOpening(false);
+    timeline.add([label], { opacity: [0, 1], duration: 900, ease: 'inOutQuart' }, 400);
 
     return () => {
       timeline.revert();
@@ -59,36 +52,27 @@ export function Letterbox() {
     };
   }, [reducedMotion]);
 
-  // Route change: shut the frame, hold for a breath, open on the new chapter.
+  // Route change: subtle label refresh
   useEffect(() => {
     if (firstLoad.current) {
       firstLoad.current = false;
       return;
     }
 
-    const top = topRef.current;
-    const bottom = bottomRef.current;
     const label = labelRef.current;
-    if (!top || !bottom) return;
+    if (!label || reducedMotion) return;
 
     timelineRef.current?.revert();
 
-    if (reducedMotion) {
-      top.style.height = OPEN;
-      bottom.style.height = OPEN;
-      return;
-    }
-
     const timeline = createTimeline({
-      defaults: { ease: 'inOutQuart', duration: 800 },
+      defaults: { ease: 'inOutQuart', duration: 600 },
     });
 
     timelineRef.current = timeline;
 
     timeline
-      .add([label], { opacity: 0, duration: 260 }, 0)
-      .add([top, bottom], { height: CLOSED, duration: 800 }, 0)
-      .add([top, bottom], { height: OPEN, duration: 1600, ease: 'outExpo' }, 980);
+      .add([label], { opacity: [1, 0], duration: 250 }, 0)
+      .add([label], { opacity: [0, 1], duration: 600 }, 300);
 
     return () => {
       timeline.revert();
@@ -101,13 +85,12 @@ export function Letterbox() {
       <div
         ref={topRef}
         className="letterbox-panel absolute inset-x-0 top-0 flex items-end justify-center overflow-hidden bg-bg"
-        style={{ height: CLOSED }}
+        style={{ height: OPEN }}
       >
         <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
         <div
           ref={labelRef}
           className="absolute bottom-[1.6vh] left-0 right-0 flex items-center justify-between px-[clamp(1.25rem,5vw,5rem)] opacity-0"
-          data-opening={opening}
         >
           <span className="label">Aurelia — Surat</span>
           <span className="label hidden sm:block">Fine Jewellery</span>
@@ -117,10 +100,12 @@ export function Letterbox() {
       <div
         ref={bottomRef}
         className="letterbox-panel absolute inset-x-0 bottom-0 flex items-start justify-center overflow-hidden bg-bg"
-        style={{ height: CLOSED }}
+        style={{ height: OPEN }}
       >
         <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
       </div>
     </div>
   );
 }
+
+export default Letterbox;
