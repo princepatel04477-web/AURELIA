@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   AURELIA — design tokens
+   Palette, type and motion primitives. Every component reads these,
+   never a raw hex value.
+   ------------------------------------------------------------------ */
+:root {
+  /* cinematic palette */
+  --bg: #0a0907;
+  --surface: #14110d;
+  --gold: #c9a961;
+  --gold-bright: #ebd8a6;
+  --ivory: #f3eee4;
+  --muted: #857d6e;
+
+  /* derived hairlines & veils */
+  --line: rgba(201, 169, 97, 0.18);
+  --line-soft: rgba(243, 238, 228, 0.08);
+  --veil: rgba(10, 9, 7, 0.72);
+
+  /* shadcn surface aliases (used by generated ui primitives) */
+  --background: var(--bg);
+  --foreground: var(--ivory);
+  --card: var(--surface);
+  --card-foreground: var(--ivory);
+  --popover: var(--surface);
+  --popover-foreground: var(--ivory);
+  --primary: var(--gold);
+  --primary-foreground: var(--bg);
+  --secondary: var(--surface);
+  --secondary-foreground: var(--ivory);
+  --muted-foreground: var(--muted);
+  --accent: var(--gold-bright);
+  --accent-foreground: var(--bg);
+  --destructive: #6e2b23;
+  --destructive-foreground: var(--ivory);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--gold);
+  --radius: 0.125rem;
+
+  /* cinematic chrome */
+  --letterbox: 6vh;
+
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: auto;
+    background-color: var(--bg);
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--ivory);
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-weight: 300;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: var(--gold);
+    color: var(--bg);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--gold-bright);
+    outline-offset: 4px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 300;
+    letter-spacing: -0.015em;
+  }
+
+  /* Lenis */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+}
+
+@layer components {
+  /* No-JS safety: the frame must never trap the page behind a black screen. */
+  @media (scripting: none) {
+    .letterbox-panel {
+      height: var(--letterbox) !important;
+    }
+  }
+
+  /* small-caps label — 0.32em tracking, the only "loud" typographic element */
+  .label {
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-size: 0.625rem;
+    font-weight: 400;
+    line-height: 1.4;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-variant-caps: all-small-caps;
+  }
+
+  .label-gold {
+    color: var(--gold);
+  }
+
+  .display {
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 300;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+  }
+
+  .display-italic {
+    font-family: var(--font-display), Georgia, serif;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .hairline {
+    height: 1px;
+    width: 100%;
+    background-color: var(--line);
+  }
+
+  .frame {
+    padding-inline: clamp(1.25rem, 5vw, 5rem);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  /* vertical rhythm guard: nothing ever sits under the letterbox bars */
+  .safe-y {
+    padding-block: calc(var(--letterbox) + 1.5rem);
+  }
+
+  .gold-gradient {
+    background-image: linear-gradient(100deg, var(--gold) 0%, var(--gold-bright) 42%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .grain-veil {
+    background-image: radial-gradient(circle at 50% 40%, rgba(201, 169, 97, 0.06), transparent 62%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Reduced motion — every animated surface must fall back to stillness.
+   ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
