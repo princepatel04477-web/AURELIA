@@ -29,8 +29,8 @@ Until a file is delivered, the component that uses it must render its `--surface
 
 ## /public/jewelry/ — the objects
 
-| File | Role | Ratio | Section | Alt text |
-|---|---|---|---|---|
+| File | Status | Role | Ratio | Section | Alt text |
+|---|---|---|---|---|---|---|
 | `aurelia-solitaire-ring.jpg` | Hero stone — the house signature solitaire | 4:5 | Hero | Solitaire diamond ring in yellow gold on black |
 | `eternity-band.jpg` | Full eternity band, macro side-on | 1:1 | Chapter II — The Stone | Eternity band of baguette diamonds |
 | `emerald-drop-earrings.jpg` | Drop earrings, emerald + diamond halo | 4:5 | Chapter II — The Stone | Emerald drop earrings with diamond halos |
@@ -50,7 +50,7 @@ Until a file is delivered, the component that uses it must render its `--surface
 
 ## /public/cinematic/ — the atmosphere
 
-| File | Role | Ratio | Used by | Alt / note |
+| File | Status | Role | Ratio | Used by | Alt / note |
 |---|---|---|---|---|
 | `hero-plate.jpg` | Hero backdrop fallback still (behind WebGL intro) | 16:9 | Hero | Dark studio interior with a single warm light |
 | `intro-poster.jpg` | Poster frame for the WebGL intro on slow devices | 16:9 | Preloader | Abstract gold light in black |
