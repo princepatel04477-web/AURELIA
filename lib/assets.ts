@@ -45,6 +45,11 @@ export const JEWELRY = {
   atelierBench: '/jewelry/atelier-bench.jpg',
   stoneMacro: '/jewelry/stone-macro.jpg',
   handModel: '/jewelry/hand-model.jpg',
+  /** Four angles of the featured piece (Chapter VI). */
+  featured1: '/jewelry/featured-1.webp',
+  featured2: '/jewelry/featured-2.webp',
+  featured3: '/jewelry/featured-3.webp',
+  featured4: '/jewelry/featured-4.webp',
 } as const;
 
 /** The 3D object. Same rule: no literal paths inside components. */
@@ -68,6 +73,10 @@ export const ASSET_FALLBACKS: Readonly<Record<string, readonly string[]>> = {
   [CINEMATIC.introPoster]: [CINEMATIC.heroPlate],
   /** No file fallback: `Ring.tsx` builds the procedural solitaire. */
   [MODELS.ring]: [],
+  [JEWELRY.featured1]: [],
+  [JEWELRY.featured2]: [],
+  [JEWELRY.featured3]: [],
+  [JEWELRY.featured4]: [],
 };
 
 /**
@@ -84,6 +93,10 @@ export const CODE_IMAGE_PATHS: readonly string[] = [
   CINEMATIC.chapterLight,
   CINEMATIC.chapterFire,
   CINEMATIC.chapterHand,
+  JEWELRY.featured1,
+  JEWELRY.featured2,
+  JEWELRY.featured3,
+  JEWELRY.featured4,
 ];
 
 /** Everything the app can request, images and the 3D object. */

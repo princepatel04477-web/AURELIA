@@ -43,6 +43,10 @@ Until a file is delivered, the component that uses it must render its `--surface
 | `atelier-bench.jpg` | Bench, tools, unset stones (process) | 3:2 | Chapter III — The Hand | Jeweller's bench with tools and loose stones |
 | `stone-macro.jpg` | Loose brilliant, inclusion detail | 1:1 | Chapter II — The Stone | Macro of a loose brilliant-cut diamond |
 | `hand-model.jpg` | Worn scale — ring on hand, low light | 4:5 | CTA / Call to Buy | Hand wearing a gold ring in low light |
+| `featured-1.webp` | Featured piece — three-quarter hero angle | 4:5 | Chapter VI — The One | Featured solitaire, three-quarter view |
+| `featured-2.webp` | Featured piece — profile, band and gallery | 4:5 | Chapter VI — The One | Featured solitaire, profile |
+| `featured-3.webp` | Featured piece — top-down on the stone | 4:5 | Chapter VI — The One | Featured solitaire, top view |
+| `featured-4.webp` | Featured piece — macro of the setting | 4:5 | Chapter VI — The One | Featured solitaire, setting macro |
 
 ## /public/cinematic/ — the atmosphere
 
@@ -101,7 +105,8 @@ appear in code. The rule is enforced, not just documented:
 | `gold-texture.jpg` | Headline renders with the CSS gold gradient fill (`#C9A961 → #EBD8A6`). No swap, no shift: the gradient heading stays in normal flow, the textured heading is an absolutely-positioned overlay. |
 | `atelier-hands.jpg` | Falls back to `chapter-hand.jpg`; if that is absent too, a dark `--surface` plate inside a 1px hairline frame, caption intact. Never an `<img>` with a broken source. |
 | `chapter-*.jpg` stills | Rendered as a CSS `background-image` over `--surface`, so a missing plate is simply a darker frame — no broken-image glyph, no reflow. |
-| `chapter-fire.jpg` | CSS plate: radial `#C9A961` glow at 8% on `--bg`. Same fixed frame, no `<img>`, no shift. |
+| `chapter-fire.jpg` | CSS plate: radial `#C9A961` glow at 8% on `--bg`.
+| `featured-1..4.webp` | Any missing angle is replaced by an inline plate (dark surface, gold hairline) before the slider mounts, so the WebGL slider never points at a 404. | Same fixed frame, no `<img>`, no shift. |
 | Any plate after `webglcontextlost` | The stage fades out and the current section's `chapter-*.jpg` plate takes the frame; if that file is absent, its CSS plate does. |
 | `ring.glb` | The procedural solitaire in `components/three/Ring.tsx` stands in. |
 | Product cards (Phase 4) | Dark `--surface` card + hairline frame, fixed aspect ratio so nothing shifts. |
