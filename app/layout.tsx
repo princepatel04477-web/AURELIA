@@ -53,7 +53,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${cormorant.variable} ${inter.variable}`} suppressHydrationWarning>
-      <body className="min-h-dvh bg-bg font-body text-ivory antialiased">
+      {/* Browser extensions (e.g. Bitdefender's `bis_register`) stamp attributes on <body> before React hydrates. */}
+      <body className="min-h-dvh bg-bg font-body text-ivory antialiased" suppressHydrationWarning>
         <SmoothScrollProvider>
           <a
             href="#main"

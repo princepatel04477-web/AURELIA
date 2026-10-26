@@ -25,13 +25,13 @@ export default function ConfiguratorScene({ metal, finish, isMobile, onReady }: 
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
     >
       <Suspense fallback={null}>
-        <Turntable metal={metal} finish={finish} isMobile={isMobile} onReady={onReady} />
+        <Turntable metal={metal} finish={finish} onReady={onReady} />
       </Suspense>
     </Canvas>
   );
 }
 
-function Turntable({ metal, finish, isMobile, onReady }: Props) {
+function Turntable({ metal, finish, onReady }: Omit<Props, 'isMobile'>) {
   const { band, diamonds } = useRingGeometry();
   const envMap = useStudioEnvironment();
   const material = useRef<THREE.MeshPhysicalMaterial>(null);
