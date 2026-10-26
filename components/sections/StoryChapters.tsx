@@ -338,7 +338,7 @@ function StillPlate({ chapter }: { chapter: Chapter }) {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: `linear-gradient(180deg, rgba(10,9,7,0.72), rgba(10,9,7,0.94)), url(${resolved})`,
+            backgroundImage: `linear-gradient(180deg, rgba(250,247,242,0.45), rgba(250,247,242,0.82)), url(${resolved})`,
           }}
         />
       ) : null}
@@ -414,7 +414,7 @@ function InterludePlate() {
               className="absolute inset-0 grain-veil opacity-70"
               style={{
                 backgroundImage:
-                  'radial-gradient(64% 58% at 50% 42%, rgba(201,169,97,0.14), transparent 72%)',
+                  'radial-gradient(64% 58% at 50% 42%, rgba(158,117,40,0.06), transparent 72%)',
               }}
             />
             <div className="relative px-8 text-center">{caption}</div>

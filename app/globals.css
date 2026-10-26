@@ -3,25 +3,24 @@
 @tailwind utilities;
 
 /* ------------------------------------------------------------------
-   AURELIA — design tokens
-   Palette, type and motion primitives. Every component reads these,
-   never a raw hex value.
+   AURELIA — luxury light editorial design tokens
+   Cartier / Van Cleef & Arpels inspired warm ivory & royal gold.
    ------------------------------------------------------------------ */
 :root {
-  /* cinematic palette */
-  --bg: #0a0907;
-  --surface: #14110d;
-  --gold: #c9a961;
-  --gold-bright: #ebd8a6;
-  --ivory: #f3eee4;
-  --muted: #857d6e;
+  /* luxury light palette */
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --gold: #9e7528;
+  --gold-bright: #c99a3e;
+  --ivory: #1c1917;
+  --muted: #6b6357;
 
   /* derived hairlines & veils */
-  --line: rgba(201, 169, 97, 0.18);
-  --line-soft: rgba(243, 238, 228, 0.08);
-  --veil: rgba(10, 9, 7, 0.72);
+  --line: rgba(158, 117, 40, 0.20);
+  --line-soft: rgba(28, 25, 23, 0.08);
+  --veil: rgba(250, 247, 242, 0.92);
 
-  /* shadcn surface aliases (used by generated ui primitives) */
+  /* shadcn surface aliases */
   --background: var(--bg);
   --foreground: var(--ivory);
   --card: var(--surface);
@@ -29,23 +28,23 @@
   --popover: var(--surface);
   --popover-foreground: var(--ivory);
   --primary: var(--gold);
-  --primary-foreground: var(--bg);
+  --primary-foreground: #ffffff;
   --secondary: var(--surface);
   --secondary-foreground: var(--ivory);
   --muted-foreground: var(--muted);
   --accent: var(--gold-bright);
-  --accent-foreground: var(--bg);
-  --destructive: #6e2b23;
-  --destructive-foreground: var(--ivory);
+  --accent-foreground: #ffffff;
+  --destructive: #991b1b;
+  --destructive-foreground: #ffffff;
   --border: var(--line);
   --input: var(--line);
   --ring: var(--gold);
-  --radius: 0.125rem;
+  --radius: 0.25rem;
 
-  /* cinematic chrome */
-  --letterbox: 6vh;
+  /* chrome */
+  --letterbox: 0px;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 @layer base {
@@ -63,7 +62,7 @@
     background-color: var(--bg);
     color: var(--ivory);
     font-family: var(--font-body), system-ui, sans-serif;
-    font-weight: 300;
+    font-weight: 350;
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -73,7 +72,7 @@
 
   ::selection {
     background-color: var(--gold);
-    color: var(--bg);
+    color: #ffffff;
   }
 
   :focus-visible {
@@ -88,6 +87,7 @@
     font-family: var(--font-display), Georgia, serif;
     font-weight: 300;
     letter-spacing: -0.015em;
+    color: var(--ivory);
   }
 
   /* Lenis */
@@ -106,20 +106,19 @@
 }
 
 @layer components {
-  /* No-JS safety: the frame must never trap the page behind a black screen. */
   @media (scripting: none) {
     .letterbox-panel {
-      height: var(--letterbox) !important;
+      height: 0px !important;
     }
   }
 
-  /* small-caps label — 0.32em tracking, the only "loud" typographic element */
+  /* small-caps label — 0.28em tracking, elegant luxury metadata */
   .label {
     font-family: var(--font-body), system-ui, sans-serif;
-    font-size: 0.625rem;
-    font-weight: 400;
+    font-size: 0.6875rem;
+    font-weight: 500;
     line-height: 1.4;
-    letter-spacing: 0.32em;
+    letter-spacing: 0.28em;
     text-transform: uppercase;
     color: var(--muted);
     font-variant-caps: all-small-caps;
@@ -132,8 +131,9 @@
   .display {
     font-family: var(--font-display), Georgia, serif;
     font-weight: 300;
-    line-height: 0.92;
+    line-height: 0.95;
     letter-spacing: -0.02em;
+    color: var(--ivory);
   }
 
   .display-italic {
@@ -162,20 +162,19 @@
     text-wrap: pretty;
   }
 
-  /* vertical rhythm guard: nothing ever sits under the letterbox bars */
   .safe-y {
-    padding-block: calc(var(--letterbox) + 1.5rem);
+    padding-block: 2rem;
   }
 
   .gold-gradient {
-    background-image: linear-gradient(100deg, var(--gold) 0%, var(--gold-bright) 42%, var(--gold) 100%);
+    background-image: linear-gradient(110deg, #8b651b 0%, #b8860b 30%, #d4af37 55%, #8b651b 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .grain-veil {
-    background-image: radial-gradient(circle at 50% 40%, rgba(201, 169, 97, 0.06), transparent 62%);
+    background-image: radial-gradient(circle at 50% 40%, rgba(158, 117, 40, 0.04), transparent 62%);
   }
 
   .no-scrollbar::-webkit-scrollbar {
@@ -188,9 +187,6 @@
   }
 }
 
-/* ------------------------------------------------------------------
-   Reduced motion — every animated surface must fall back to stillness.
-   ------------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

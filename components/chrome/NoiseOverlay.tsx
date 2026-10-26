@@ -16,7 +16,7 @@ export function NoiseOverlay() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[70]">
       <Noise
-        opacity={0.04}
+        opacity={0.015}
         size={220}
         fps={reducedMotion ? 0 : 18}
         blendMode="soft-light"
@@ -30,7 +30,7 @@ export function NoiseOverlay() {
         className="h-full w-full"
       />
       <div className="absolute inset-0 grain-veil" />
-      <div className="absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_0%,transparent_45%,rgba(10,9,7,0.45)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_0%,transparent_45%,rgba(250,247,242,0)_100%)]" />
     </div>
   );
 }

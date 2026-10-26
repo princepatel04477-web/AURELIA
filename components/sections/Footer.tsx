@@ -143,7 +143,7 @@ export function Footer() {
         <div
           className="absolute inset-0"
           style={{
-            backgroundImage: 'linear-gradient(160deg, #2A2116 0%, #14110D 58%, #0A0907 100%)',
+            backgroundImage: 'linear-gradient(160deg, #FAF4ED 0%, #F5EDE4 58%, #EFE5D9 100%)',
           }}
         />
         {visible && silkSlot ? (
@@ -151,8 +151,8 @@ export function Footer() {
             <Silk
               speed={0.22}
               scale={1.35}
-              color="#2A2116"
-              sheenColor="#8A6E3F"
+              color="#F5EFE8"
+              sheenColor="#C99A3E"
               noiseIntensity={0.35}
               rotation={0.12}
               sheen={0.45}

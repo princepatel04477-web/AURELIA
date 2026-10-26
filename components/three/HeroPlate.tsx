@@ -92,13 +92,13 @@ export function HeroPlate({ visible }: { visible: boolean }) {
         <div
           className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1400ms] ease-out-expo"
           style={{
-            backgroundImage: `linear-gradient(180deg, rgba(10,9,7,0.55), rgba(10,9,7,0.86)), url(${resolved})`,
+            backgroundImage: `linear-gradient(180deg, rgba(250,247,242,0.4), rgba(250,247,242,0.7)), url(${resolved})`,
           }}
         />
       ) : null}
 
       {/* Cinematic floor: keeps plate and canvas reading as the same frame. */}
-      <div className="absolute inset-0 bg-[radial-gradient(120%_94%_at_50%_0%,transparent_42%,rgba(10,9,7,0.55)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(120%_94%_at_50%_0%,transparent_42%,transparent_100%)]" />
     </div>
   );
 }

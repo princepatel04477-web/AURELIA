@@ -5,8 +5,8 @@ import { createTimeline, type Timeline } from 'animejs';
 import { usePathname } from 'next/navigation';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
-const OPEN = '6vh';
-const CLOSED = '50vh';
+const OPEN = '0px';
+const CLOSED = '0px';
 
 /**
  * Cinematic chrome.
@@ -100,7 +100,7 @@ export function Letterbox() {
     <div aria-hidden className="pointer-events-none fixed inset-0 z-[60]">
       <div
         ref={topRef}
-        className="letterbox-panel absolute inset-x-0 top-0 flex items-end justify-center overflow-hidden bg-bg"
+        className="letterbox-panel absolute inset-x-0 top-0 flex items-end justify-center overflow-hidden bg-transparent"
         style={{ height: CLOSED }}
       >
         <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
@@ -116,7 +116,7 @@ export function Letterbox() {
 
       <div
         ref={bottomRef}
-        className="letterbox-panel absolute inset-x-0 bottom-0 flex items-start justify-center overflow-hidden bg-bg"
+        className="letterbox-panel absolute inset-x-0 bottom-0 flex items-start justify-center overflow-hidden bg-transparent"
         style={{ height: CLOSED }}
       >
         <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
