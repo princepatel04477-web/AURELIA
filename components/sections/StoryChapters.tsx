@@ -561,7 +561,7 @@ export default function StoryChapters() {
 
   if (reducedMotion) {
     return (
-      <div id="collection" className="relative">
+      <div id="story" className="relative">
         <div className="frame pb-4 pt-[calc(var(--letterbox)+4rem)]">
           <span className="label">Chapters — the making</span>
         </div>
@@ -571,7 +571,7 @@ export default function StoryChapters() {
   }
 
   return (
-    <div id="collection" ref={rootRef} className="relative">
+    <div id="story" ref={rootRef} className="relative">
       {/* Progress rail — a quiet index of the passage. */}
       <div
         ref={railRef}

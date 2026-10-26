@@ -3,6 +3,7 @@ import { cormorant, inter } from './fonts';
 import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
 import { NoiseOverlay } from '@/components/chrome/NoiseOverlay';
 import { Letterbox } from '@/components/chrome/Letterbox';
+import { SiteNav } from '@/components/chrome/SiteNav';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </a>
 
           <Letterbox />
+          <SiteNav />
           <NoiseOverlay />
 
           <main id="main" className="relative">
