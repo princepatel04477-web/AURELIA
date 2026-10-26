@@ -1,7 +1,7 @@
+import Image from 'next/image';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { AssetFrame } from '@/components/chrome/AssetFrame';
 import { ChapterCard } from '@/components/chrome/ChapterCard';
 import { PiecePrice } from '@/components/collections/PiecePrice';
 import { PieceStage } from '@/components/collections/PieceStage';
@@ -205,12 +205,15 @@ export default async function PiecePage({ params }: PiecePageProps) {
             {related.map((entry) => (
               <li key={entry.slug}>
                 <Link href={`/collections/${entry.slug}`} className="group block">
-                  <AssetFrame
-                    src={entry.image}
-                    alt={`${entry.name} — ${entry.stone} in ${entry.metal}.`}
-                    ratio="aspect-[4/5]"
-                    className="w-full"
-                  />
+                  <div className="relative aspect-[4/5] w-full overflow-hidden border border-line/40 bg-surface/50 transition-all duration-500 group-hover:border-gold/60">
+                    <Image
+                      src={entry.image}
+                      alt={`${entry.name} — ${entry.stone} in ${entry.metal}.`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
                   <div className="mt-4 flex items-baseline justify-between gap-4">
                     <span className="text-meta text-ivory/85 transition-colors duration-[900ms] ease-out-expo group-hover:text-gold-bright">
                       {entry.name}
