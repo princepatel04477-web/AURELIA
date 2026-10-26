@@ -33,8 +33,13 @@ export type CameraRigValue = {
   shot: CameraShot;
   /** Move the rig to a named shot. */
   goTo: (shot: CameraShot) => void;
-  /** True once the film has started — the 3s dolly-in runs from here. */
+  /**
+   * True once the film has started: the frame is open *and* the ring exists.
+   * The 3s dolly-in runs from this moment, never over an empty stage.
+   */
   introComplete: boolean;
+  /** True once the stage has rendered its first real frame (ring in place). */
+  stageReady: boolean;
   /** True once the ring has settled in the hero shot. */
   settled: boolean;
   /** Mirrors prefers-reduced-motion for DOM choreography. */
@@ -43,16 +48,20 @@ export type CameraRigValue = {
   pointer: RefObject<PointerState>;
   /** Called by the rig when the dolly lands. */
   markSettled: () => void;
+  /** Called from inside the canvas once the ring has mounted. */
+  markStageReady: () => void;
 };
 
 const FALLBACK: CameraRigValue = {
   shot: 'hero',
   goTo: () => undefined,
   introComplete: false,
+  stageReady: false,
   settled: false,
   reducedMotion: true,
   pointer: { current: { x: 0, y: 0 } },
   markSettled: () => undefined,
+  markStageReady: () => undefined,
 };
 
 const CameraRigContext = createContext<CameraRigValue>(FALLBACK);
@@ -83,20 +92,30 @@ export function useCameraRig(): CameraRigValue {
 export function useCameraRigStore(): CameraRigValue {
   const reducedMotion = useReducedMotion();
   const [shot, setShot] = useState<CameraShot>('hero');
-  const [introComplete, setIntroComplete] = useState(false);
+  const [frameOpen, setFrameOpen] = useState(false);
+  const [stageReady, setStageReady] = useState(false);
   const [settled, setSettled] = useState(false);
   const pointer = useRef<PointerState>({ x: 0, y: 0 });
 
+  // The intro the DOM controls: the frame opens, then it hands over to the rig.
   useEffect(() => {
     if (reducedMotion) {
-      setIntroComplete(true);
-      setSettled(true);
+      setFrameOpen(true);
       return undefined;
     }
-
-    const timer = window.setTimeout(() => setIntroComplete(true), 340);
+    const timer = window.setTimeout(() => setFrameOpen(true), 340);
     return () => window.clearTimeout(timer);
   }, [reducedMotion]);
+
+  // Never let a missing canvas strand the film: the dolly starts regardless
+  // once the stage has had a fair chance to arrive.
+  useEffect(() => {
+    if (stageReady || reducedMotion) return undefined;
+    const timer = window.setTimeout(() => setStageReady(true), 2000);
+    return () => window.clearTimeout(timer);
+  }, [stageReady, reducedMotion]);
+
+  const introComplete = frameOpen && (stageReady || reducedMotion);
 
   // Pointer parallax source. Passive, allocation-free, never re-renders.
   useEffect(() => {
@@ -127,19 +146,27 @@ export function useCameraRigStore(): CameraRigValue {
     return () => window.clearTimeout(timer);
   }, [introComplete, settled, reducedMotion]);
 
+  // Reduced motion: no dolly, no reveal choreography — a finished still.
+  useEffect(() => {
+    if (reducedMotion) setSettled(true);
+  }, [reducedMotion]);
+
   const goTo = useCallback((next: CameraShot) => setShot(next), []);
   const markSettled = useCallback(() => setSettled(true), []);
+  const markStageReady = useCallback(() => setStageReady(true), []);
 
   return useMemo(
     () => ({
       shot,
       goTo,
       introComplete,
+      stageReady,
       settled,
       reducedMotion,
       pointer,
       markSettled,
+      markStageReady,
     }),
-    [shot, goTo, introComplete, settled, reducedMotion, markSettled]
+    [shot, goTo, introComplete, stageReady, settled, reducedMotion, markSettled, markStageReady]
   );
 }

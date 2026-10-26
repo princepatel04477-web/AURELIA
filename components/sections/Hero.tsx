@@ -9,7 +9,7 @@ import {
   useCameraRigStore,
 } from '@/components/three/CameraRigContext';
 import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
-import { useWebGL2Support } from '@/components/three/useViewportTier';
+import { useViewportTier, useWebGL2Support } from '@/components/three/useViewportTier';
 
 /**
  * Title card.
@@ -221,6 +221,7 @@ function HeroFrame() {
  */
 function RaysLayer({ supported }: { supported: boolean }) {
   const hasSlot = useAnimatingCanvasSlot('rays', supported);
+  const { isMobile } = useViewportTier();
 
   if (!supported || !hasSlot) return <LightFallback />;
 
@@ -248,7 +249,7 @@ function RaysLayer({ supported }: { supported: boolean }) {
       cursorShadow={false}
       intro
       opacity={0.9}
-      maxDevicePixelRatio={1.5}
+      maxDevicePixelRatio={isMobile ? 1.25 : 1.5}
       className="h-full w-full"
     />
   );

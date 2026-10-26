@@ -19,8 +19,9 @@ import { Effects } from './Effects';
  *
  * Perf gates:
  *   • one of the two animating WebGL slots (see `canvasPolicy.ts`)
- *   • `frameloop` drops to `demand` when the hero is scrolled out of frame or
- *     the tab is hidden, so the ring keeps its context but burns no frames
+ *   • `frameloop` stays at `demand` until the intro starts, then drops back to
+ *     `demand` when the hero is scrolled out of frame or the tab is hidden —
+ *     the ring keeps its context but burns no frames
  */
 export default function Stage() {
   const { isMobile } = useViewportTier();
@@ -51,7 +52,7 @@ export default function Stage() {
       dpr={isMobile ? [1, 1.5] : [1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={{ position: INTRO_SHOT.position, fov: INTRO_SHOT.fov, near: 0.1, far: 80 }}
-      frameloop={rig.reducedMotion ? 'demand' : awake ? 'always' : 'demand'}
+      frameloop={!rig.introComplete || rig.reducedMotion ? 'demand' : awake ? 'always' : 'demand'}
       style={{ pointerEvents: 'none', background: 'transparent' }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 1.05;
@@ -75,9 +76,27 @@ export default function Stage() {
 
       <Suspense fallback={null}>
         <Ring isMobile={isMobile} />
+        <StageReady />
       </Suspense>
 
       <Effects isMobile={isMobile} />
     </Canvas>
   );
+}
+
+/**
+ * Reports the ring's arrival to the DOM layer.
+ *
+ * Mounting inside the Ring's Suspense boundary means this only runs once the
+ * object (model or procedural) is actually in the scene — the dolly-in never
+ * starts over an empty stage.
+ */
+function StageReady() {
+  const markStageReady = useCameraRig().markStageReady;
+
+  useEffect(() => {
+    markStageReady();
+  }, [markStageReady]);
+
+  return null;
 }
