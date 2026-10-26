@@ -27,7 +27,7 @@ function SweepingSoftbox({ still }: { still: boolean }) {
 
   return (
     <group ref={group} position={[3.3, 1.55, 0.7]}>
-      <Lightformer form="rect" intensity={3.0} color="#FFF1CE" scale={[0.5, 3.6, 1]} target={[0, 0.3, 0]} />
+      <Lightformer form="rect" intensity={2.4} color="#EBD8A6" scale={[0.5, 3.6, 1]} target={[0, 0.3, 0]} />
     </group>
   );
 }
@@ -45,16 +45,16 @@ type StudioEnvironmentProps = {
 export function StudioEnvironment({ isMobile, reducedMotion }: StudioEnvironmentProps) {
   return (
     <Environment resolution={isMobile ? 128 : 256} frames={isMobile || reducedMotion ? 1 : Infinity}>
-      
+      <color attach="background" args={['#0A0907']} />
 
       {/* Key softbox — camera left, high, warm. */}
-      <Lightformer form="rect" intensity={2.2} color="#FFF8EB" scale={[5, 7, 1]} position={[-5, 3, -2.5]} target={[0, 0.4, 0]} />
+      <Lightformer form="rect" intensity={1.5} color="#FFF4DC" scale={[5, 7, 1]} position={[-5, 3, -2.5]} target={[0, 0.4, 0]} />
       {/* Fill softbox — camera right, cooler and softer. */}
-      <Lightformer form="rect" intensity={1.4} color="#F5E8D0" scale={[4, 6, 1]} position={[5, 2, -2]} target={[0, 0.4, 0]} />
+      <Lightformer form="rect" intensity={0.75} color="#EBD8A6" scale={[4, 6, 1]} position={[5, 2, -2]} target={[0, 0.4, 0]} />
       {/* Ring light — front, tight, reads as the catchlight in the stone. */}
-      <Lightformer form="ring" intensity={2.8} color="#FFFFFF" scale={2.6} position={[0, 2.3, 3.2]} target={[0, 0.5, 0]} />
+      <Lightformer form="ring" intensity={2} color="#FFF1CE" scale={2.6} position={[0, 2.3, 3.2]} target={[0, 0.5, 0]} />
       {/* Floor bounce — keeps the lower band from going dead black. */}
-      <Lightformer form="rect" intensity={0.65} color="#E0C285" scale={[12, 12, 1]} position={[0, -4, 0]} rotation={[Math.PI / 2, 0, 0]} />
+      <Lightformer form="rect" intensity={0.22} color="#C9A961" scale={[12, 12, 1]} position={[0, -4, 0]} rotation={[Math.PI / 2, 0, 0]} />
 
       <SweepingSoftbox still={reducedMotion} />
     </Environment>

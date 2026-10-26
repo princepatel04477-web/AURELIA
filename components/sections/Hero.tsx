@@ -145,7 +145,7 @@ function HeroFrame() {
               scale={1}
               rotation={0}
               mouseTilt={0}
-              lightMode={true}
+              lightMode={false}
               intro={false}
               paused
               dpr={1.5}
@@ -171,7 +171,7 @@ function HeroFrame() {
       <div
         className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-[1400ms] ease-out-expo"
         style={{
-          mixBlendMode: 'normal',
+          mixBlendMode: 'screen',
           opacity: webgl.supported && !rig.contextLost ? 1 : 0,
         }}
       >

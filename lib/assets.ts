@@ -180,7 +180,7 @@ export const CSS_PLATE =
  * always has a valid, self-contained source.
  */
 const PLATE_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="g" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#C9A961" stop-opacity="0.14"/><stop offset="0.6" stop-color="#C9A961" stop-opacity="0.03"/><stop offset="1" stop-color="#FAF7F2" stop-opacity="0"/></radialGradient></defs><rect width="800" height="1000" fill="#FFFFFF"/><rect width="800" height="1000" fill="url(#g)"/><rect x="24" y="24" width="752" height="952" fill="none" stroke="#C9A961" stroke-opacity="0.22"/></svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="g" cx="50%" cy="42%" r="62%"><stop offset="0" stop-color="#C9A961" stop-opacity="0.14"/><stop offset="0.6" stop-color="#C9A961" stop-opacity="0.03"/><stop offset="1" stop-color="#0A0907" stop-opacity="0"/></radialGradient></defs><rect width="800" height="1000" fill="#14110D"/><rect width="800" height="1000" fill="url(#g)"/><rect x="24" y="24" width="752" height="952" fill="none" stroke="#C9A961" stroke-opacity="0.22"/></svg>';
 
 export const PLATE_URI = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PLATE_SVG)}`;
 
