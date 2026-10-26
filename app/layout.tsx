@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { cormorant, inter } from './fonts';
 import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
-import { NoiseOverlay } from '@/components/chrome/NoiseOverlay';
 import { Letterbox } from '@/components/chrome/Letterbox';
 import { SiteNav } from '@/components/chrome/SiteNav';
 import { PageTransition } from '@/components/cinematic/PageTransition';
@@ -66,7 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Letterbox />
           <PageTransition />
           <SiteNav />
-          <NoiseOverlay />
+          
 
           <main id="main" className="relative">
             {children}

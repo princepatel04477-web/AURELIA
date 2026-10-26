@@ -7,6 +7,8 @@ import { STAGE_PAUSE_EVENT } from '@/components/three/CameraRig';
 import { JEWELRY } from '@/lib/assets';
 import { formatINR } from '@/lib/collections';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { useWebGL2Support } from '@/components/three/useViewportTier';
+import { SafeWebGLBoundary } from '@/components/three/SafeWebGLBoundary';
 
 /**
  * CHAPTER VI — THE ONE.
@@ -112,7 +114,8 @@ export default function FeaturedPiece() {
   const sectionRef = useRef<HTMLElement>(null);
   const specRef = useRef<HTMLDListElement>(null);
   const angles = useAngles();
-  const useSlider = (angles?.real.length ?? 0) >= 2;
+  const webgl = useWebGL2Support();
+  const useSlider = webgl.ready && webgl.supported && (angles?.real.length ?? 0) >= 2;
 
   // The slider is its own WebGL surface: park the stage while it is on screen.
   // With fewer than two real angles there is no slider, so nothing to park.
@@ -236,28 +239,48 @@ export default function FeaturedPiece() {
                     }}
                   />
                 ) : useSlider ? (
-                  <MorphSlider
-                    items={angles.real.map((image, index) => ({
-                      image,
-                      caption: `Angle ${index + 1}`,
-                    }))}
-                    transition="melt"
-                    duration={1400}
-                    ease="power2.inOut"
-                    intensity={0.62}
-                    scale={1.04}
-                    aberration={0.32}
-                    drift={0.18}
-                    autoplay
-                    autoplayDelay={5000}
-                    loop
-                    radius={0}
-                    overlayColor="#0A0907"
-                    showCaptions={false}
-                    showControls={false}
-                    showIndicators
-                    className="absolute inset-0 h-full w-full"
-                  />
+                  <SafeWebGLBoundary
+                    fallback={
+                      <div className="absolute inset-0 flex items-center justify-center p-2">
+                        <TiltedCard
+                          imageSrc={angles.still}
+                          altText={`${THE_PIECE.name} — ${THE_PIECE.stone} in ${THE_PIECE.metal}.`}
+                          captionText={THE_PIECE.name}
+                          containerHeight="100%"
+                          containerWidth="100%"
+                          imageHeight="100%"
+                          imageWidth="100%"
+                          scaleOnHover={1.02}
+                          rotateAmplitude={6}
+                          showTooltip={false}
+                          radius={0}
+                        />
+                      </div>
+                    }
+                  >
+                    <MorphSlider
+                      items={angles.real.map((image, index) => ({
+                        image,
+                        caption: `Angle ${index + 1}`,
+                      }))}
+                      transition="melt"
+                      duration={1400}
+                      ease="power2.inOut"
+                      intensity={0.62}
+                      scale={1.04}
+                      aberration={0.32}
+                      drift={0.18}
+                      autoplay
+                      autoplayDelay={5000}
+                      loop
+                      radius={0}
+                      overlayColor="#0A0907"
+                      showCaptions={false}
+                      showControls={false}
+                      showIndicators
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </SafeWebGLBoundary>
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center p-2">
                     <TiltedCard

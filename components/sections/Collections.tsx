@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createTimeline, stagger, type Timeline } from 'animejs';
 import { ChapterCard } from '@/components/chrome/ChapterCard';
+import { useWebGL2Support } from '@/components/three/useViewportTier';
+import { SafeWebGLBoundary } from '@/components/three/SafeWebGLBoundary';
 import { setStageShot, STAGE_PAUSE_EVENT } from '@/components/three/CameraRig';
 import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
 import { useReducedMotion } from '@/lib/useReducedMotion';
@@ -86,6 +88,7 @@ function useIsCompact(): boolean {
 
 export default function Collections() {
   const reducedMotion = useReducedMotion();
+  const webgl = useWebGL2Support();
   const compact = useIsCompact();
   const router = useRouter();
 
@@ -281,7 +284,8 @@ export default function Collections() {
           />
         ) : (
           <div className="relative h-[clamp(22rem,46vw,34rem)] w-full">
-            {images && carouselSlot ? (
+            {images && carouselSlot && webgl.ready && webgl.supported ? (
+              <SafeWebGLBoundary fallback={<CarouselSkeleton />}>
               <CircularCarousel
                 items={pieces.map((piece) => ({
                   src: images[piece.image] ?? PLATE_URI,
@@ -317,6 +321,7 @@ export default function Collections() {
                   if (piece) openPiece(piece, index);
                 }}
               />
+            </SafeWebGLBoundary>
             ) : (
               <CarouselSkeleton />
             )}

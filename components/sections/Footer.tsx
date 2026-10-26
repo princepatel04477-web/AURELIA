@@ -6,6 +6,8 @@ import { createTimeline, type Timeline } from 'animejs';
 import { STAGE_PAUSE_EVENT } from '@/components/three/CameraRig';
 import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
 import { useReducedMotion } from '@/lib/useReducedMotion';
+import { useWebGL2Support } from '@/components/three/useViewportTier';
+import { SafeWebGLBoundary } from '@/components/three/SafeWebGLBoundary';
 
 /**
  * THE FOOTER.
@@ -48,6 +50,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 export function Footer() {
   const reducedMotion = useReducedMotion();
+  const webgl = useWebGL2Support();
   const footerRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
@@ -146,8 +149,8 @@ export function Footer() {
             backgroundImage: 'linear-gradient(160deg, #2A2116 0%, #14110D 58%, #0A0907 100%)',
           }}
         />
-        {visible && silkSlot ? (
-          <div className="absolute inset-0 opacity-[0.55]">
+        {visible && silkSlot && webgl.ready && webgl.supported ? (
+          <SafeWebGLBoundary fallback={null}><div className="absolute inset-0 opacity-[0.55]">
             <Silk
               speed={0.22}
               scale={1.35}
@@ -168,7 +171,7 @@ export function Footer() {
               dpr={1}
               className="h-full w-full"
             />
-          </div>
+          </div></SafeWebGLBoundary>
         ) : null}
         {/* Floor: keeps the silk from ever washing out the type. */}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-bg/45 to-bg/85" />

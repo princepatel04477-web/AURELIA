@@ -11,6 +11,7 @@ import {
 import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
 import { useViewportTier, useWebGL2Support } from '@/components/three/useViewportTier';
 import { HeroPlate } from '@/components/three/HeroPlate';
+import { SafeWebGLBoundary } from '@/components/three/SafeWebGLBoundary';
 
 /**
  * Title card.
@@ -116,7 +117,7 @@ function HeroFrame() {
 
       {/* Back layer: one warm source at top centre, slow. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 z-0">
-        <RaysLayer supported={webgl.supported} />
+        <SafeWebGLBoundary fallback={null}><RaysLayer supported={webgl.ready && webgl.supported} /></SafeWebGLBoundary>
       </div>
 
       {/* Middle layer: the wordmark, behind the ring. */}
@@ -128,7 +129,8 @@ function HeroFrame() {
           ref={wordmarkRef}
           className="mx-auto flex h-[clamp(3.25rem,12.6vw,12.6rem)] w-[82vw] max-w-[1680px] items-center justify-center opacity-0"
         >
-          {webgl.supported ? (
+          {webgl.ready && webgl.supported ? (
+            <SafeWebGLBoundary fallback={<span className="display gold-gradient text-[clamp(3rem,12.2vw,12.2rem)] uppercase leading-none">Aurelia</span>}>
             <MetallicPaint
               text="AURELIA"
               fontFamily={displayFamily}
@@ -150,7 +152,7 @@ function HeroFrame() {
               paused
               dpr={1.5}
               className="h-full w-full"
-            />
+            /></SafeWebGLBoundary>
           ) : (
             <span className="display gold-gradient text-[clamp(3rem,12.2vw,12.2rem)] uppercase leading-none">
               Aurelia
@@ -175,7 +177,7 @@ function HeroFrame() {
           opacity: webgl.supported && !rig.contextLost ? 1 : 0,
         }}
       >
-        {webgl.ready && webgl.supported && !rig.contextLost ? <Stage /> : null}
+        {webgl.ready && webgl.supported && !rig.contextLost ? <SafeWebGLBoundary fallback={null}><Stage /></SafeWebGLBoundary> : null}
       </div>
 
       {/* Copy: a small-caps line and one link. */}
