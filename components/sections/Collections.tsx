@@ -4,7 +4,7 @@ import { ChapterCard } from '@/components/chrome/ChapterCard';
 import { CollectionGrid } from '@/components/collections/CollectionGrid';
 
 /**
- * CHAPTER V — THE COLLECTION.
+ * CHAPTER VII — THE COLLECTION.
  *
  * Eight pieces, one bench.
  * Renders the clean, resilient CollectionGrid with category filter crossfade,
@@ -28,7 +28,7 @@ export default function Collections() {
       />
 
       <div className="frame relative z-10 pb-24 pt-[calc(var(--letterbox)+5rem)]">
-        <ChapterCard numeral="V" title="The Collection" meta="Eight pieces" />
+        <ChapterCard numeral="VII" title="The Collection" meta="Eight pieces" />
 
         <div className="mb-12 mt-8 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <h2

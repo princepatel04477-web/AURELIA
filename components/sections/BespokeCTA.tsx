@@ -376,7 +376,7 @@ export default function BespokeCTA({ prefill }: BespokeCTAProps) {
 
       <div className="frame relative z-10 flex min-h-[100svh] flex-col justify-center pb-[calc(var(--letterbox)+3rem)] pt-[calc(var(--letterbox)+4rem)]">
         <div className="mx-auto w-full max-w-2xl text-center">
-          <span className="label text-gold">Chapter VII — The Commission</span>
+          <span className="label text-gold">Chapter VIII — The Commission</span>
 
           <h2
             id="bespoke-title"

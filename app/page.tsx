@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
-import Hero from '@/components/sections/Hero';
-import StoryChapters from '@/components/sections/StoryChapters';
+import Film from '@/components/film/Film';
+import Configurator from '@/components/film/Configurator';
 import Collections from '@/components/sections/Collections';
-import FeaturedPiece from '@/components/sections/FeaturedPiece';
 import BespokeCTA from '@/components/sections/BespokeCTA';
 import { Atelier } from '@/components/sections/Atelier';
 
@@ -23,12 +22,14 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
-      <Hero />
-      <StoryChapters />
-      <Collections />
-      <FeaturedPiece />
-      <BespokeCTA />
-      <Atelier />
+      <Film />
+      {/* Everything after the film sits on an opaque ground above the fixed stage. */}
+      <div className="relative z-10 bg-bg">
+        <Configurator />
+        <Collections />
+        <BespokeCTA />
+        <Atelier />
+      </div>
     </>
   );
 }
