@@ -18,7 +18,7 @@ import {
   RepeatWrapping,
 } from 'three';
 import { useCameraRig } from './CameraRigContext';
-import { INTRO_DOLLY_MS, INTRO_SHOT, PARALLAX_MAX_RAD, SHOTS } from './shots';
+import { INTRO_DOLLY_MS, INTRO_SHOT, PARALLAX_MAX_RAD, SHOTS, type CameraShot } from './shots';
 
 /* -------------------------------------------------------------------------
    Stage direction — the contract between the DOM and the camera.
@@ -40,6 +40,29 @@ type StageState = {
 const stageState: StageState = { beat: null, progress: 0 };
 
 let requestFrames: ((on: boolean) => void) | null = null;
+
+/** Custom event the DOM uses to park the canvas while another surface is on screen. */
+export const STAGE_PAUSE_EVENT = 'aurelia:stage-pause';
+
+export type StagePauseDetail = { paused: boolean };
+
+/**
+ * Named-shot override, published from the DOM.
+ *
+ * The chapter path owns the camera while a beat is live; outside a beat this
+ * lets a section request one of the six shots by name (e.g. the collection asks
+ * for `collection` so the ring recedes into soft focus behind the carousel).
+ */
+let externalShot: CameraShot | null = null;
+
+export function setStageShot(shot: CameraShot | null): void {
+  externalShot = shot;
+  if (shot) requestFrames?.(true);
+}
+
+export function getStageShot(): CameraShot | null {
+  return externalShot;
+}
 
 type BeatListener = (beat: StageBeat | null) => void;
 const beatListeners = new Set<BeatListener>();
@@ -335,7 +358,7 @@ export function CameraRig() {
 
     if (rig.reducedMotion) {
       // Stillness: the shot is real, it just does not move.
-      const still = SHOTS[rig.shot];
+      const still = SHOTS[externalShot ?? rig.shot];
       camera.position.set(...still.position);
       camera.fov = still.fov * portraitBoost(camera.aspect);
       camera.lookAt(new Vector3(...still.target));
@@ -413,7 +436,7 @@ export function CameraRig() {
         }
       } else {
         // Hand over to named shots; a shot change is a slow ease, never a cut.
-        const shot = SHOTS[rig.shot];
+        const shot = SHOTS[externalShot ?? rig.shot];
         const ease = 1 - Math.exp(-1.6 * dt);
         position.current.lerp(scratchLookAt.set(...shot.position), ease);
         target.current.lerp(scratchLookAt.set(...shot.target), ease);

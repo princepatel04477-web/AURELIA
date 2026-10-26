@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useCameraRig } from './CameraRigContext';
+import { STAGE_PAUSE_EVENT, type StagePauseDetail } from './CameraRig';
 import { useAnimatingCanvasSlot } from './canvasPolicy';
 import { useViewportTier } from './useViewportTier';
 import { INTRO_SHOT } from './shots';
@@ -30,6 +31,8 @@ export default function Stage() {
   const rig = useCameraRig();
   const hasSlot = useAnimatingCanvasSlot('stage');
   const [awake, setAwake] = useState(true);
+  /** Parked by another surface on screen (see STAGE_PAUSE_EVENT). */
+  const [parked, setParked] = useState(false);
 
   useEffect(() => {
     const sync = () => {
@@ -47,6 +50,18 @@ export default function Stage() {
     };
   }, []);
 
+  // Two-canvas rule: a section that mounts its own WebGL surface asks the stage
+  // to stop rendering while it is on screen. The context stays alive, no frames.
+  useEffect(() => {
+    const onPause = (event: Event) => {
+      const detail = (event as CustomEvent<StagePauseDetail>).detail;
+      setParked(Boolean(detail?.paused));
+    };
+
+    window.addEventListener(STAGE_PAUSE_EVENT, onPause);
+    return () => window.removeEventListener(STAGE_PAUSE_EVENT, onPause);
+  }, []);
+
   if (!hasSlot) return null;
 
   return (
@@ -54,7 +69,9 @@ export default function Stage() {
       dpr={isMobile ? [1, 1.5] : [1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={{ position: INTRO_SHOT.position, fov: INTRO_SHOT.fov, near: 0.1, far: 80 }}
-      frameloop={!rig.introComplete || rig.reducedMotion ? 'demand' : awake ? 'always' : 'demand'}
+      frameloop={
+        !rig.introComplete || rig.reducedMotion || parked ? 'demand' : awake ? 'always' : 'demand'
+      }
       style={{ pointerEvents: 'none', background: 'transparent' }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 1.05;

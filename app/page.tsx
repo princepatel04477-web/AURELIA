@@ -1,6 +1,6 @@
 import Hero from '@/components/sections/Hero';
 import StoryChapters from '@/components/sections/StoryChapters';
-import TheCollection from '@/components/sections/TheCollection';
+import Collections from '@/components/sections/Collections';
 import { Atelier } from '@/components/sections/Atelier';
 
 export default function Home() {
@@ -8,7 +8,7 @@ export default function Home() {
     <>
       <Hero />
       <StoryChapters />
-      <TheCollection />
+      <Collections />
       <Atelier />
     </>
   );
