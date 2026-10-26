@@ -24,6 +24,8 @@ export const CINEMATIC = {
   /** Chapter stills, also the reduced-motion plates. */
   chapterStone: '/cinematic/chapter-stone.jpg',
   chapterLight: '/cinematic/chapter-light.jpg',
+  /** Chapter III plate. 16:9, molten gold poured into a crucible. */
+  chapterFire: '/cinematic/chapter-fire.jpg',
   chapterHand: '/cinematic/chapter-hand.jpg',
   /** Hero/atmosphere plates reserved for later phases. */
   heroPlate: '/cinematic/hero-plate.jpg',
@@ -60,6 +62,7 @@ export const ASSET_FALLBACKS: Readonly<Record<string, readonly string[]>> = {
   [CINEMATIC.atelierHands]: [CINEMATIC.chapterHand],
   [CINEMATIC.chapterStone]: [],
   [CINEMATIC.chapterLight]: [],
+  [CINEMATIC.chapterFire]: [],
   [CINEMATIC.chapterHand]: [],
   [CINEMATIC.heroPlate]: [],
   [CINEMATIC.introPoster]: [CINEMATIC.heroPlate],
@@ -79,6 +82,7 @@ export const CODE_IMAGE_PATHS: readonly string[] = [
   CINEMATIC.atelierHands,
   CINEMATIC.chapterStone,
   CINEMATIC.chapterLight,
+  CINEMATIC.chapterFire,
   CINEMATIC.chapterHand,
 ];
 
@@ -92,6 +96,13 @@ export const CODE_ASSET_PATHS: readonly string[] = [...CODE_IMAGE_PATHS, MODELS.
  */
 export const CSS_PLATE =
   'bg-surface border border-line rounded-xs [background-image:radial-gradient(60%_55%_at_50%_42%,rgba(201,169,97,0.10),transparent_72%)]';
+
+/** The declared CSS stand-in for the fire plate: a gold glow at 8% on --bg. */
+export const FIRE_PLATE_STYLE = {
+  backgroundColor: 'var(--bg)',
+  backgroundImage:
+    'radial-gradient(58% 52% at 50% 56%, rgba(201, 169, 97, 0.08), rgba(201, 169, 97, 0.03) 46%, transparent 76%)',
+} as const;
 
 /* -------------------------------------------------------------------------
    Resolution helpers.

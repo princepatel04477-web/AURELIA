@@ -7,7 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import dynamic from 'next/dynamic';
 import { setStageDirection, type StageBeat } from '@/components/three/CameraRig';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { CINEMATIC, fallbackChain } from '@/lib/assets';
+import { CINEMATIC, CSS_PLATE, FIRE_PLATE_STYLE, fallbackChain } from '@/lib/assets';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,7 +61,7 @@ const CHAPTERS: Chapter[] = [
     body: 'Gold is worked at the temperature where it remembers.',
     from: 0.3,
     to: 0.55,
-    still: CINEMATIC.chapterLight,
+    still: CINEMATIC.chapterFire,
   },
   {
     beat: 'hand',
@@ -291,6 +291,29 @@ function ChapterHeadline({ text, goldReady }: { text: string; goldReady: boolean
    Reduced motion: a stack of stills, no pins, no scrubbing.
    ------------------------------------------------------------------------- */
 
+/** One still, with its declared CSS plate underneath — never a broken image. */
+function StillPlate({ chapter }: { chapter: Chapter }) {
+  const resolved = useResolvedImage(chapter.still);
+  const isFire = chapter.still === CINEMATIC.chapterFire;
+
+  return (
+    <div
+      aria-hidden
+      className={`absolute inset-0 ${isFire ? '' : CSS_PLATE}`}
+      style={isFire ? FIRE_PLATE_STYLE : undefined}
+    >
+      {resolved ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(10,9,7,0.72), rgba(10,9,7,0.94)), url(${resolved})`,
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 function StillChapters() {
   const all = [CHAPTERS[0], CHAPTERS[1], INTERLUDE, CHAPTERS[2]];
 
@@ -302,15 +325,7 @@ function StillChapters() {
           aria-label={`Chapter ${chapter.numeral} — ${chapter.title}`}
           className="relative flex min-h-[80svh] items-end overflow-hidden border-t border-line/40 bg-surface"
         >
-          <div
-            aria-hidden
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `linear-gradient(180deg, rgba(10,9,7,0.72), rgba(10,9,7,0.94)), url(${chapter.still})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          />
+          <StillPlate chapter={chapter} />
           <div className="frame relative z-10 w-full py-16">
             <span className="label block text-gold">
               Chapter {chapter.numeral} — {chapter.title}

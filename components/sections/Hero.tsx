@@ -10,6 +10,7 @@ import {
 } from '@/components/three/CameraRigContext';
 import { useAnimatingCanvasSlot } from '@/components/three/canvasPolicy';
 import { useViewportTier, useWebGL2Support } from '@/components/three/useViewportTier';
+import { HeroPlate } from '@/components/three/HeroPlate';
 
 /**
  * Title card.
@@ -59,12 +60,11 @@ function HeroFrame() {
   }, []);
 
   // No WebGL, no dolly: settle quickly so the type is never held hostage.
-  const markSettled = rig.markSettled;
+  const markWebglUnavailable = rig.markWebglUnavailable;
   useEffect(() => {
-    if (!webgl.ready || webgl.supported) return undefined;
-    const timer = window.setTimeout(() => markSettled(), 900);
-    return () => window.clearTimeout(timer);
-  }, [webgl.ready, webgl.supported, markSettled]);
+    if (!webgl.ready) return;
+    if (!webgl.supported) markWebglUnavailable();
+  }, [webgl.ready, webgl.supported, markWebglUnavailable]);
 
   // Ring settles → wordmark fades up → the line arrives letter by letter.
   useEffect(() => {
@@ -165,11 +165,17 @@ function HeroFrame() {
         canvas is composited as light, never as an opaque card, so the wordmark
         can never be buried by a black frame.
       */}
+      {/* The still that carries the film when WebGL is absent or dies. */}
+      <HeroPlate visible={webgl.ready && (!webgl.supported || rig.contextLost)} />
+
       <div
-        className="pointer-events-none fixed inset-0 z-20"
-        style={{ mixBlendMode: 'screen' }}
+        className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-[1400ms] ease-out-expo"
+        style={{
+          mixBlendMode: 'screen',
+          opacity: webgl.supported && !rig.contextLost ? 1 : 0,
+        }}
       >
-        <Stage />
+        {webgl.ready && webgl.supported && !rig.contextLost ? <Stage /> : null}
       </div>
 
       {/* Copy: a small-caps line and one link. */}

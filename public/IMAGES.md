@@ -50,7 +50,8 @@ Until a file is delivered, the component that uses it must render its `--surface
 |---|---|---|---|---|
 | `hero-plate.jpg` | Hero backdrop fallback still (behind WebGL intro) | 16:9 | Hero | Dark studio interior with a single warm light |
 | `intro-poster.jpg` | Poster frame for the WebGL intro on slow devices | 16:9 | Preloader | Abstract gold light in black |
-| `chapter-light.jpg` | Chapter I backing plate, light through fabric | 3:2 | Chapter I | Warm light falling through dark fabric |
+| `chapter-light.jpg` | Chapter I backing plate, light through fabric | 3:2 | Chapter I, hero plate fallback | Warm light falling through dark fabric |
+| `chapter-fire.jpg` | Chapter III backing plate — the crucible | 16:9 | Chapter III — The Fire | Molten gold poured into a crucible, sparks rising, dark foundry |
 | `chapter-stone.jpg` | Chapter II backing plate, stone texture | 3:2 | Chapter II | Macroscopic crystalline texture |
 | `chapter-hand.jpg` | Chapter III backing plate, hands at work | 3:2 | Chapter III | Hands working at a jeweller's bench |
 | `chapter-vow.jpg` | Chapter IV backing plate, drapery | 3:2 | Chapter IV | Ivory silk drapery in low light |
@@ -100,6 +101,8 @@ appear in code. The rule is enforced, not just documented:
 | `gold-texture.jpg` | Headline renders with the CSS gold gradient fill (`#C9A961 → #EBD8A6`). No swap, no shift: the gradient heading stays in normal flow, the textured heading is an absolutely-positioned overlay. |
 | `atelier-hands.jpg` | Falls back to `chapter-hand.jpg`; if that is absent too, a dark `--surface` plate inside a 1px hairline frame, caption intact. Never an `<img>` with a broken source. |
 | `chapter-*.jpg` stills | Rendered as a CSS `background-image` over `--surface`, so a missing plate is simply a darker frame — no broken-image glyph, no reflow. |
+| `chapter-fire.jpg` | CSS plate: radial `#C9A961` glow at 8% on `--bg`. Same fixed frame, no `<img>`, no shift. |
+| Any plate after `webglcontextlost` | The stage fades out and the current section's `chapter-*.jpg` plate takes the frame; if that file is absent, its CSS plate does. |
 | `ring.glb` | The procedural solitaire in `components/three/Ring.tsx` stands in. |
 | Product cards (Phase 4) | Dark `--surface` card + hairline frame, fixed aspect ratio so nothing shifts. |
 
@@ -108,8 +111,8 @@ appear in code. The rule is enforced, not just documented:
 - **Hero plate**: 2400 × 1350 minimum, ≤ 420 KB AVIF.
 - **Product stills**: 1600 px on the long edge, ≤ 260 KB each.
 - **Textures** (`gold-texture`, `gold-foil`, `env-studio`): power-of-two where possible; HDR ≤ 1 MB.
-- **`gold-texture.jpg` / `atelier-hands.jpg`**: both 16:9, 2400 × 1350, ≤ 320 KB — they run full-bleed
-  behind pinned type, so banding and visible compression blocks are disqualifying.
+- **`gold-texture.jpg` / `atelier-hands.jpg` / `chapter-fire.jpg`**: all 16:9, 2400 × 1350, ≤ 320 KB — they
+  run full-bleed behind pinned type, so banding and visible compression blocks are disqualifying.
 - **GLB**: ≤ 2 MB, Draco-compressed, PBR Metallic-Roughness, Y-up, real-world scale in mm.
 - Every `<Image>` needs `alt` text drawn from this table, explicit `width`/`height` (or `fill` + `sizes`),
   and `loading="lazy"` except the hero plate.

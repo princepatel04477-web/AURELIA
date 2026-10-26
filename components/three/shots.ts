@@ -68,6 +68,13 @@ export const INTRO_SHOT: ShotDefinition = {
 /** The dolly-in is a deliberate 3 seconds. */
 export const INTRO_DOLLY_MS = 3000;
 
+/**
+ * Hard ceiling on waiting for the first Stage frame, measured from the moment
+ * the preloader starts to exit. Whichever comes first — a rendered frame or
+ * this timeout — releases the intro. WebGL never blocks the film.
+ */
+export const INTRO_FALLBACK_MS = 4000;
+
 /** Pointer parallax never exceeds six degrees of yaw or pitch. */
 export const PARALLAX_MAX_RAD = (6 * Math.PI) / 180;
 

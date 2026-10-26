@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useCameraRig } from './CameraRigContext';
 import { useAnimatingCanvasSlot } from './canvasPolicy';
 import { useViewportTier } from './useViewportTier';
@@ -22,6 +22,8 @@ import { Effects } from './Effects';
  *   • `frameloop` stays at `demand` until the intro starts, then drops back to
  *     `demand` when the hero is scrolled out of frame or the tab is hidden —
  *     the ring keeps its context but burns no frames
+ *   • `webglcontextlost` is reported to the rig, which swaps in a still plate.
+ *     Nothing is restored automatically: a dead context is a still frame.
  */
 export default function Stage() {
   const { isMobile } = useViewportTier();
@@ -56,6 +58,20 @@ export default function Stage() {
       style={{ pointerEvents: 'none', background: 'transparent' }}
       onCreated={({ gl }) => {
         gl.toneMappingExposure = 1.05;
+
+        const canvas = gl.domElement;
+        const onLost = () => {
+          rig.markContextLost();
+        };
+        const onRestored = () => {
+          rig.markContextRestored();
+        };
+
+        canvas.addEventListener('webglcontextlost', onLost);
+        canvas.addEventListener('webglcontextrestored', onRestored);
+
+        // React Three Fiber owns the canvas for the life of the stage; these
+        // listeners die with the element, so no manual teardown is needed here.
       }}
     >
       <CameraRig />
@@ -85,18 +101,37 @@ export default function Stage() {
 }
 
 /**
- * Reports the ring's arrival to the DOM layer.
+ * Reports the first *rendered* frame to the DOM layer.
  *
- * Mounting inside the Ring's Suspense boundary means this only runs once the
- * object (model or procedural) is actually in the scene — the dolly-in never
- * starts over an empty stage.
+ * It sits inside the Ring's Suspense boundary, so it only starts counting once
+ * the object (model or procedural) is in the scene — and it reports from
+ * `useFrame`, i.e. after the frame that actually contains the ring. The dolly-in
+ * never starts over an empty stage, and never waits longer than the fallback.
  */
 function StageReady() {
   const markStageReady = useCameraRig().markStageReady;
+  const invalidate = useThree((state) => state.invalidate);
+  const reported = useRef(false);
 
+  // The stage runs at `demand` until the intro starts, so ask for a frame
+  // explicitly — otherwise nothing would ever be rendered to report.
   useEffect(() => {
+    let frames = 0;
+    let raf = 0;
+    const pump = () => {
+      invalidate();
+      frames += 1;
+      if (frames < 8 && !reported.current) raf = requestAnimationFrame(pump);
+    };
+    pump();
+    return () => cancelAnimationFrame(raf);
+  }, [invalidate]);
+
+  useFrame(() => {
+    if (reported.current) return;
+    reported.current = true;
     markStageReady();
-  }, [markStageReady]);
+  });
 
   return null;
 }

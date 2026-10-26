@@ -12,7 +12,7 @@ import {
   type RefObject,
 } from 'react';
 import { useReducedMotion } from '@/lib/useReducedMotion';
-import { INTRO_DOLLY_MS, type CameraShot } from './shots';
+import { INTRO_DOLLY_MS, INTRO_FALLBACK_MS, type CameraShot } from './shots';
 
 export type PointerState = {
   /** −1 … 1, left to right. */
@@ -40,6 +40,10 @@ export type CameraRigValue = {
   introComplete: boolean;
   /** True once the stage has rendered its first real frame (ring in place). */
   stageReady: boolean;
+  /** False when the browser has no WebGL2 at all — the plate carries the film. */
+  webglAvailable: boolean;
+  /** True after `webglcontextlost`: the canvas has been replaced by a plate. */
+  contextLost: boolean;
   /** True once the ring has settled in the hero shot. */
   settled: boolean;
   /** Mirrors prefers-reduced-motion for DOM choreography. */
@@ -48,8 +52,14 @@ export type CameraRigValue = {
   pointer: RefObject<PointerState>;
   /** Called by the rig when the dolly lands. */
   markSettled: () => void;
-  /** Called from inside the canvas once the ring has mounted. */
+  /** Called from inside the canvas on its first rendered frame. */
   markStageReady: () => void;
+  /** Called by the capability probe: no WebGL2 on this device. */
+  markWebglUnavailable: () => void;
+  /** Called by the canvas when its context is lost. */
+  markContextLost: () => void;
+  /** Called with every `webglcontextrestored`. */
+  markContextRestored: () => void;
 };
 
 const FALLBACK: CameraRigValue = {
@@ -57,11 +67,16 @@ const FALLBACK: CameraRigValue = {
   goTo: () => undefined,
   introComplete: false,
   stageReady: false,
+  webglAvailable: true,
+  contextLost: false,
   settled: false,
   reducedMotion: true,
   pointer: { current: { x: 0, y: 0 } },
   markSettled: () => undefined,
   markStageReady: () => undefined,
+  markWebglUnavailable: () => undefined,
+  markContextLost: () => undefined,
+  markContextRestored: () => undefined,
 };
 
 const CameraRigContext = createContext<CameraRigValue>(FALLBACK);
@@ -84,16 +99,23 @@ export function useCameraRig(): CameraRigValue {
 /**
  * Owns the film's clock.
  *
- * `introComplete` fires shortly after hydration (the frame has opened, the
- * letters are painted), the rig spends three seconds dollying in from the
- * intro shot, and only then is the hero allowed to reveal its type.
- * A safety timer settles the page even if WebGL never comes up.
+ * The intro never waits on WebGL:
+ *
+ *   introComplete = frame open AND ( first Stage frame
+ *                                    OR INTRO_FALLBACK_MS after the preloader exits
+ *                                    OR WebGL unavailable )
+ *
+ * Whichever lands first releases the 3s dolly — or, with no stage at all, the
+ * type choreography runs over the plate. Nothing here logs.
  */
 export function useCameraRigStore(): CameraRigValue {
   const reducedMotion = useReducedMotion();
   const [shot, setShot] = useState<CameraShot>('hero');
   const [frameOpen, setFrameOpen] = useState(false);
   const [stageReady, setStageReady] = useState(false);
+  const [webglAvailable, setWebglAvailable] = useState(true);
+  const [contextLost, setContextLost] = useState(false);
+  const [fallbackElapsed, setFallbackElapsed] = useState(false);
   const [settled, setSettled] = useState(false);
   const pointer = useRef<PointerState>({ x: 0, y: 0 });
 
@@ -107,15 +129,15 @@ export function useCameraRigStore(): CameraRigValue {
     return () => window.clearTimeout(timer);
   }, [reducedMotion]);
 
-  // Never let a missing canvas strand the film: the dolly starts regardless
-  // once the stage has had a fair chance to arrive.
+  // The clock starts when the preloader begins to exit, not on hydration.
   useEffect(() => {
-    if (stageReady || reducedMotion) return undefined;
-    const timer = window.setTimeout(() => setStageReady(true), 2000);
+    if (!frameOpen || stageReady || fallbackElapsed || reducedMotion) return undefined;
+    const timer = window.setTimeout(() => setFallbackElapsed(true), INTRO_FALLBACK_MS);
     return () => window.clearTimeout(timer);
-  }, [stageReady, reducedMotion]);
+  }, [frameOpen, stageReady, fallbackElapsed, reducedMotion]);
 
-  const introComplete = frameOpen && (stageReady || reducedMotion);
+  const introComplete =
+    frameOpen && (stageReady || fallbackElapsed || !webglAvailable || reducedMotion);
 
   // Pointer parallax source. Passive, allocation-free, never re-renders.
   useEffect(() => {
@@ -146,6 +168,15 @@ export function useCameraRigStore(): CameraRigValue {
     return () => window.clearTimeout(timer);
   }, [introComplete, settled, reducedMotion]);
 
+  // No canvas (or a dead one): there is no dolly to wait for, so the type is
+  // released on a short beat instead of the full fail-safe.
+  useEffect(() => {
+    if (settled || reducedMotion) return undefined;
+    if (webglAvailable && !contextLost) return undefined;
+    const timer = window.setTimeout(() => setSettled(true), 900);
+    return () => window.clearTimeout(timer);
+  }, [webglAvailable, contextLost, settled, reducedMotion]);
+
   // Reduced motion: no dolly, no reveal choreography — a finished still.
   useEffect(() => {
     if (reducedMotion) setSettled(true);
@@ -154,6 +185,12 @@ export function useCameraRigStore(): CameraRigValue {
   const goTo = useCallback((next: CameraShot) => setShot(next), []);
   const markSettled = useCallback(() => setSettled(true), []);
   const markStageReady = useCallback(() => setStageReady(true), []);
+  const markWebglUnavailable = useCallback(() => {
+    setWebglAvailable(false);
+    setStageReady(false);
+  }, []);
+  const markContextLost = useCallback(() => setContextLost(true), []);
+  const markContextRestored = useCallback(() => setContextLost(false), []);
 
   return useMemo(
     () => ({
@@ -161,12 +198,31 @@ export function useCameraRigStore(): CameraRigValue {
       goTo,
       introComplete,
       stageReady,
+      webglAvailable,
+      contextLost,
       settled,
       reducedMotion,
       pointer,
       markSettled,
       markStageReady,
+      markWebglUnavailable,
+      markContextLost,
+      markContextRestored,
     }),
-    [shot, goTo, introComplete, stageReady, settled, reducedMotion, markSettled, markStageReady]
+    [
+      shot,
+      goTo,
+      introComplete,
+      stageReady,
+      webglAvailable,
+      contextLost,
+      settled,
+      reducedMotion,
+      markSettled,
+      markStageReady,
+      markWebglUnavailable,
+      markContextLost,
+      markContextRestored,
+    ]
   );
 }

@@ -41,6 +41,25 @@ const stageState: StageState = { beat: null, progress: 0 };
 
 let requestFrames: ((on: boolean) => void) | null = null;
 
+type BeatListener = (beat: StageBeat | null) => void;
+const beatListeners = new Set<BeatListener>();
+
+/** Lets the plate layer follow whichever chapter is on screen. */
+export function subscribeStageBeat(listener: BeatListener): () => void {
+  beatListeners.add(listener);
+  return () => {
+    beatListeners.delete(listener);
+  };
+}
+
+export function getStageBeat(): StageBeat | null {
+  return stageState.beat;
+}
+
+const emitBeat = () => {
+  beatListeners.forEach((listener) => listener(stageState.beat));
+};
+
 /**
  * Called by the chapter ScrollTriggers (scrub 1.2).
  * Silently no-ops when the canvas is not on screen, so the DOM never has to
@@ -48,7 +67,9 @@ let requestFrames: ((on: boolean) => void) | null = null;
  */
 export function setStageDirection(next: { beat: StageBeat | null; progress?: number }): void {
   const wasIdle = stageState.beat === null;
+  const changed = stageState.beat !== next.beat;
   stageState.beat = next.beat;
+  if (changed) emitBeat();
   if (typeof next.progress === 'number') {
     stageState.progress = MathUtils.clamp(next.progress, 0, 1);
   }
