@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { MeshRefractionMaterial } from '@react-three/drei';
 import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { GoldDust } from './GoldDust';
 import { Sparks } from './Sparks';
+import { StoneMaterial } from './StoneMaterial';
 import { beatWeight, BEATS, film, smoothstep } from './filmStore';
 import { METALS, useLooseDiamond, useRingGeometry, useStudioEnvironment } from './useRingAsset';
 
@@ -42,21 +42,35 @@ function useShots(stoneY: number): Shot[] {
   );
 }
 
-function sampleShots(shots: Shot[], progress: number) {
+type ShotSample = {
+  camera: THREE.Vector3;
+  target: THREE.Vector3;
+  yaw: number;
+  pitch: number;
+  shift: number;
+};
+
+/** Writes into `out` — no allocation per frame, so no GC stutter on phones. */
+function sampleShots(shots: Shot[], progress: number, out: ShotSample): ShotSample {
   let i = 0;
   while (i < shots.length - 2 && progress > shots[i + 1].at) i += 1;
   const a = shots[i];
   const b = shots[i + 1];
   const t = smoothstep(a.at, b.at, progress);
-  const lerp3 = (x: [number, number, number], y: [number, number, number]) =>
-    new THREE.Vector3(x[0] + (y[0] - x[0]) * t, x[1] + (y[1] - x[1]) * t, x[2] + (y[2] - x[2]) * t);
-  return {
-    camera: lerp3(a.camera, b.camera),
-    target: lerp3(a.target, b.target),
-    yaw: a.yaw + (b.yaw - a.yaw) * t,
-    pitch: a.pitch + (b.pitch - a.pitch) * t,
-    shift: a.shift + (b.shift - a.shift) * t,
-  };
+  out.camera.set(
+    a.camera[0] + (b.camera[0] - a.camera[0]) * t,
+    a.camera[1] + (b.camera[1] - a.camera[1]) * t,
+    a.camera[2] + (b.camera[2] - a.camera[2]) * t
+  );
+  out.target.set(
+    a.target[0] + (b.target[0] - a.target[0]) * t,
+    a.target[1] + (b.target[1] - a.target[1]) * t,
+    a.target[2] + (b.target[2] - a.target[2]) * t
+  );
+  out.yaw = a.yaw + (b.yaw - a.yaw) * t;
+  out.pitch = a.pitch + (b.pitch - a.pitch) * t;
+  out.shift = a.shift + (b.shift - a.shift) * t;
+  return out;
 }
 
 type FilmSceneProps = {
@@ -73,7 +87,9 @@ export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
   const camera = useThree((s) => s.camera);
 
   const ringGroup = useRef<THREE.Group>(null);
-  const bandMaterial = useRef<THREE.MeshPhysicalMaterial>(null);
+  const bandMaterial = useRef<THREE.MeshStandardMaterial>(null);
+  const shotOut = useRef<ShotSample>({ camera: new THREE.Vector3(), target: new THREE.Vector3(), yaw: 0, pitch: 0, shift: 0 });
+  const cameraGoal = useRef(new THREE.Vector3());
   const diamondMesh = useRef<THREE.Mesh>(null);
   const lookAt = useRef(new THREE.Vector3(0, 0.1, 0));
   const assembleStart = useRef<number | null>(null);
@@ -104,12 +120,15 @@ export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
     const stonesIn = smoothstep(0.88, 1, assemble);
 
     // --- Shot ---
-    const shot = sampleShots(shots, f.progress);
+    const shot = sampleShots(shots, f.progress, shotOut.current);
     const damp = 1 - Math.exp(-dt * 3.2);
-    camera.position.lerp(
-      shot.camera.clone().add(new THREE.Vector3(f.pointerX * 0.35, f.pointerY * 0.2, 0)),
-      damp
-    );
+    // Portrait screens see far less width: pull the camera back along its own line of sight.
+    const aspect = state.size.width / Math.max(1, state.size.height);
+    const reach = aspect < 1 ? Math.min(1.75, 0.62 / aspect + 0.25) : 1;
+    cameraGoal.current.copy(shot.camera).sub(shot.target).multiplyScalar(reach).add(shot.target);
+    cameraGoal.current.x += f.pointerX * 0.35;
+    cameraGoal.current.y += f.pointerY * 0.2;
+    camera.position.lerp(cameraGoal.current, damp);
     lookAt.current.lerp(shot.target, damp);
     camera.lookAt(lookAt.current);
 
@@ -149,36 +168,41 @@ export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
   return (
     <>
       <group ref={ringGroup}>
-        <mesh geometry={band} castShadow>
-          <meshPhysicalMaterial
-            ref={bandMaterial}
-            color={METALS.yellow.color}
-            metalness={1}
-            roughness={METALS.yellow.roughness}
-            clearcoat={0.6}
-            clearcoatRoughness={0.08}
-            envMapIntensity={1.6}
-            transparent
-            opacity={0}
-          />
+        <mesh geometry={band}>
+          {isMobile ? (
+            // Phones: one specular lobe instead of two (no clearcoat pass).
+            <meshStandardMaterial
+              ref={bandMaterial}
+              color={METALS.yellow.color}
+              metalness={1}
+              roughness={METALS.yellow.roughness}
+              envMapIntensity={1.7}
+              transparent
+              opacity={0}
+            />
+          ) : (
+            <meshPhysicalMaterial
+              ref={bandMaterial}
+              color={METALS.yellow.color}
+              metalness={1}
+              roughness={METALS.yellow.roughness}
+              clearcoat={0.6}
+              clearcoatRoughness={0.08}
+              envMapIntensity={1.6}
+              transparent
+              opacity={0}
+            />
+          )}
         </mesh>
         <mesh ref={diamondMesh} geometry={diamonds} visible={false}>
-          <MeshRefractionMaterial
-            envMap={envMap}
-            bounces={isMobile ? 2 : 3}
-            ior={2.4}
-            fresnel={1}
-            aberrationStrength={isMobile ? 0.01 : 0.02}
-            fastChroma
-            toneMapped={false}
-          />
+          <StoneMaterial envMap={envMap} lite={isMobile} />
         </mesh>
-        <GoldDust geometries={[band, diamonds]} count={isMobile ? 4500 : 11000} />
+        <GoldDust geometries={[band, diamonds]} count={isMobile ? 3200 : 11000} />
       </group>
 
-      <Sparks count={isMobile ? 260 : 700} />
-      <LooseDiamonds envMap={envMap} count={isMobile ? 5 : 9} />
-      <AmbientDust count={isMobile ? 220 : 520} />
+      <Sparks count={isMobile ? 180 : 700} />
+      <LooseDiamonds envMap={envMap} count={isMobile ? 4 : 9} lite={isMobile} />
+      <AmbientDust count={isMobile ? 160 : 520} />
 
       {isMobile ? null : (
         <EffectComposer multisampling={0} enableNormalPass={false}>
@@ -192,7 +216,7 @@ export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
 }
 
 /** Loose stones that drift in around THE STONE, then leave. */
-function LooseDiamonds({ envMap, count }: { envMap: THREE.Texture; count: number }) {
+function LooseDiamonds({ envMap, count, lite }: { envMap: THREE.Texture; count: number; lite: boolean }) {
   const geometry = useLooseDiamond();
   const group = useRef<THREE.Group>(null);
 
@@ -233,7 +257,7 @@ function LooseDiamonds({ envMap, count }: { envMap: THREE.Texture; count: number
     <group ref={group} visible={false}>
       {seeds.map((seed) => (
         <mesh key={seed.phase} geometry={geometry}>
-          <MeshRefractionMaterial envMap={envMap} bounces={2} ior={2.4} fresnel={1} aberrationStrength={0.015} fastChroma toneMapped={false} />
+          <StoneMaterial envMap={envMap} lite={lite} bounces={2} />
         </mesh>
       ))}
     </group>

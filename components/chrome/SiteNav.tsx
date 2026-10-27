@@ -139,7 +139,7 @@ export function SiteNav() {
           hidden && !open ? '-translate-y-full' : 'translate-y-0'
         } ${
           scrolled && !open
-            ? 'border-b border-gold/15 bg-[#0A0907]/80 backdrop-blur-md'
+            ? 'border-b border-gold/15 bg-[#0A0907]/95 md:bg-[#0A0907]/80 md:backdrop-blur-md'
             : 'border-b border-transparent bg-gradient-to-b from-[#0A0907]/85 to-transparent'
         }`}
       >

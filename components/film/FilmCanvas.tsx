@@ -23,14 +23,17 @@ export default function FilmCanvas({ isMobile, reducedMotion }: FilmCanvasProps)
   return (
     <div
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 transition-opacity duration-700"
+      // 100lvh, not inset-0: the canvas keeps one size while a phone's URL bar slides in
+      // and out, so the GPU never reallocates its buffers mid-scroll.
+      className="pointer-events-none fixed left-0 top-0 z-0 h-[100lvh] w-full transition-opacity duration-700"
       style={{ opacity: active ? 1 : 0 }}
     >
       <Canvas
         frameloop={active ? 'always' : 'never'}
         // Desktop tone-maps in the post stack; mobile has none, so the renderer does it.
         flat={!isMobile}
-        dpr={isMobile ? [1, 1.5] : [1, 2]}
+        dpr={isMobile ? 1 : [1, 2]}
+        resize={{ debounce: 250, scroll: false }}
         camera={{ position: [0, 0.15, 8.6], fov: 32, near: 0.1, far: 60 }}
         gl={{
           antialias: !isMobile,
@@ -41,7 +44,7 @@ export default function FilmCanvas({ isMobile, reducedMotion }: FilmCanvasProps)
         <Suspense fallback={null}>
           <FilmScene isMobile={isMobile} reducedMotion={reducedMotion} />
         </Suspense>
-        <AdaptiveDpr pixelated={false} />
+        {isMobile ? null : <AdaptiveDpr pixelated={false} />}
       </Canvas>
     </div>
   );

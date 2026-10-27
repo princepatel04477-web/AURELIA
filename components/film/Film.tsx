@@ -98,7 +98,7 @@ export default function Film() {
       <SafeWebGLBoundary fallback={<CrashReporter onCrash={() => setCrashed(true)} />}>
         <FilmCanvas isMobile={tier.isMobile} reducedMotion={reducedMotion} />
       </SafeWebGLBoundary>
-      <FilmTrack reducedMotion={reducedMotion} />
+      <FilmTrack reducedMotion={reducedMotion} lite={tier.isMobile} />
       <Loader />
     </>
   );
@@ -112,7 +112,7 @@ function CrashReporter({ onCrash }: { onCrash: () => void }) {
   return null;
 }
 
-function FilmTrack({ reducedMotion }: { reducedMotion: boolean }) {
+function FilmTrack({ reducedMotion, lite }: { reducedMotion: boolean; lite: boolean }) {
   const track = useRef<HTMLElement>(null);
   const cards = useRef<(HTMLDivElement | null)[]>([]);
   const hero = useRef<HTMLDivElement>(null);
@@ -141,8 +141,10 @@ function FilmTrack({ reducedMotion }: { reducedMotion: boolean }) {
         if (!el) return;
         const w = beatWeight(card.beat, progress);
         el.style.opacity = String(w);
-        el.style.transform = `translate3d(0, ${(1 - w) * 36}px, 0)`;
-        el.style.filter = `blur(${(1 - w) * 8}px)`;
+        // `translate`, not `transform`: it composes with the card's own centring class.
+        el.style.translate = `0 ${(1 - w) * 36}px`;
+        // A per-frame CSS blur over a live WebGL canvas is a phone-killer; desktop only.
+        if (!lite) el.style.filter = `blur(${(1 - w) * 8}px)`;
         el.style.visibility = w > 0.002 ? 'visible' : 'hidden';
       });
 
@@ -176,7 +178,7 @@ function FilmTrack({ reducedMotion }: { reducedMotion: boolean }) {
       trigger.kill();
       film.setActive(true);
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, lite]);
 
   // Pointer → camera parallax.
   useEffect(() => {
@@ -221,7 +223,7 @@ function FilmTrack({ reducedMotion }: { reducedMotion: boolean }) {
 
   return (
     <section ref={track} id="film" aria-label="The making of an Aurelia ring" className="relative z-10 h-[640vh]">
-      <div className="sticky top-0 h-dvh w-full overflow-hidden">
+      <div className="sticky top-0 h-[100svh] w-full overflow-hidden">
         {/* I — Title */}
         <div ref={hero} className="pointer-events-none absolute inset-x-0 bottom-0 frame pb-[calc(var(--letterbox)+3.5rem)] opacity-0 will-change-transform">
           <p data-line className="label mb-6 text-gold opacity-0">Fine Jewellery · Surat · Since 1998</p>
@@ -263,20 +265,21 @@ function FilmTrack({ reducedMotion }: { reducedMotion: boolean }) {
             ref={(el) => {
               cards.current[i] = el;
             }}
-            className={`pointer-events-none invisible absolute top-1/2 w-[min(92vw,30rem)] -translate-y-1/2 opacity-0 ${
-              card.side === 'left' ? 'left-[clamp(1.25rem,6vw,7rem)]' : 'right-[clamp(1.25rem,6vw,7rem)]'
+            // Phones: the card sits low, under the ring. Desktop: centred, opposite the ring.
+            className={`pointer-events-none invisible absolute inset-x-4 bottom-[calc(var(--letterbox)+1rem)] opacity-0 sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:w-[min(92vw,30rem)] sm:-translate-y-1/2 ${
+              card.side === 'left' ? 'sm:left-[clamp(1.25rem,6vw,7rem)]' : 'sm:right-[clamp(1.25rem,6vw,7rem)]'
             }`}
           >
             <div className="film-card">
               <div className="flex items-baseline gap-4">
-                <span className="font-display text-[clamp(3.5rem,6vw,5.5rem)] italic leading-none text-gold">{card.numeral}</span>
+                <span className="font-display text-[2.6rem] italic leading-none text-gold sm:text-[clamp(3.5rem,6vw,5.5rem)]">{card.numeral}</span>
                 <span className="label text-gold-bright/80">{card.label}</span>
               </div>
-              <h2 className="mt-6 font-display text-[clamp(2.1rem,3.6vw,3.4rem)] font-[300] leading-[1.02] text-ivory">
+              <h2 className="mt-3 font-display text-[1.75rem] font-[300] leading-[1.05] text-ivory sm:mt-6 sm:text-[clamp(2.1rem,3.6vw,3.4rem)]">
                 {card.title} <em className="text-gold-bright">{card.titleItalic}</em>
               </h2>
-              <span aria-hidden className="mt-6 block h-px w-16 bg-gold/60" />
-              <p className="mt-6 max-w-[24rem] text-[0.95rem] leading-[1.8] text-ivory/75">{card.body}</p>
+              <span aria-hidden className="mt-4 block h-px w-16 bg-gold/60 sm:mt-6" />
+              <p className="mt-4 max-w-[24rem] text-[0.875rem] leading-[1.7] text-ivory/75 sm:mt-6 sm:text-[0.95rem] sm:leading-[1.8]">{card.body}</p>
             </div>
           </div>
         ))}

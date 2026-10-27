@@ -8,6 +8,8 @@ import { usePathname } from 'next/navigation';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 gsap.registerPlugin(ScrollTrigger);
+// Phones resize the viewport whenever the URL bar slides; don't re-measure every trigger for that.
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 type SmoothScrollContextValue = {
   lenis: Lenis | null;
