@@ -12,7 +12,7 @@ type FilmCanvasProps = {
 };
 
 /** Pixel-ratio range: phones start sharp and only step down if the frame rate does. */
-const DPR_RANGE = { mobile: [1.1, 2] as const, desktop: [1.25, 2] as const };
+const DPR_RANGE = { mobile: [1.5, 2] as const, desktop: [1.5, 2] as const };
 
 /**
  * The fixed stage behind the film. It sleeps (frameloop "never") whenever the
@@ -25,7 +25,7 @@ const DPR_RANGE = { mobile: [1.1, 2] as const, desktop: [1.25, 2] as const };
 export default function FilmCanvas({ isMobile, reducedMotion }: FilmCanvasProps) {
   const [active, setActive] = useState(film.get().active);
   const [lo, hi] = isMobile ? DPR_RANGE.mobile : DPR_RANGE.desktop;
-  const [dpr, setDpr] = useState<number>(isMobile ? 1.6 : 1.75);
+  const [dpr, setDpr] = useState<number>(isMobile ? 1.75 : 2);
 
   useEffect(() => film.subscribe(() => setActive(film.get().active)), []);
 

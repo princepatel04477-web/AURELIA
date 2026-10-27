@@ -22,8 +22,9 @@ export function StoneMaterial({ envMap, lite, bounces = 3 }: StoneMaterialProps)
       bounces={lite ? Math.min(2, bounces) : bounces}
       ior={2.42}
       fresnel={1}
-      aberrationStrength={lite ? 0.006 : 0.009}
-      fastChroma
+      aberrationStrength={lite ? 0.004 : 0.006}
+      // Full three-channel dispersion on desktop (fast mode left a red streak in the table).
+      fastChroma={lite}
       toneMapped={false}
     />
   );

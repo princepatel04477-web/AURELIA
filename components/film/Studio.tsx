@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Environment, Lightformer } from '@react-three/drei';
-import { Bloom, DepthOfField, EffectComposer, Noise, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
-import { BlendFunction, ToneMappingMode } from 'postprocessing';
+import { Bloom, EffectComposer, SMAA, ToneMapping, Vignette } from '@react-three/postprocessing';
+import { ToneMappingMode } from 'postprocessing';
 import type * as THREE from 'three';
 
 /**
@@ -18,7 +18,8 @@ export function StudioEnvironment({ isMobile }: { isMobile: boolean }) {
   return (
     // No HDRI fill: a real jewellery set is black with a few hard light sources,
     // which is what gives polished gold its dark reflections and crisp white lines.
-    <Environment resolution={isMobile ? 256 : 512} frames={1} environmentIntensity={1}>
+    // High-resolution bake (once): low-res reflections were what made the gold look soft.
+    <Environment resolution={isMobile ? 512 : 1024} frames={1} environmentIntensity={1}>
       <color attach="background" args={['#14110d']} />
       {/* Big white card behind the camera — the bright face reflection photographers bounce in. */}
       <Lightformer form="rect" intensity={1.6} color="#fff7ea" scale={[12, 6, 1]} position={[0, 1, 8]} target={[0, 0, 0]} />
@@ -53,15 +54,15 @@ export function useBakedEnvironment(): THREE.Texture | null {
 
 /**
  * The lens. AgX tone mapping keeps gold yellow instead of the orange-plastic
- * look ACES gives it; bloom turns the diamonds' fire into glints; a touch of
- * grain and vignette makes it a photograph. Desktop adds shallow depth of
- * field; phones get SMAA instead of multisampling.
+ * look ACES gives it; bloom only on the diamonds' brightest glints. No depth of
+ * field and no grain — the ring stays pin-sharp. Desktop uses 4x multisampling,
+ * phones get SMAA.
  */
-export function Lens({ isMobile, focus }: { isMobile: boolean; focus?: [number, number, number] }) {
+export function Lens({ isMobile }: { isMobile: boolean }) {
   if (isMobile) {
     return (
       <EffectComposer multisampling={0} enableNormalPass={false}>
-        <Bloom luminanceThreshold={1.15} luminanceSmoothing={0.15} intensity={0.5} levels={4} mipmapBlur />
+        <Bloom luminanceThreshold={1.3} luminanceSmoothing={0.1} intensity={0.4} levels={4} mipmapBlur />
         <ToneMapping mode={ToneMappingMode.AGX} />
         <SMAA />
         <Vignette offset={0.3} darkness={0.65} eskil={false} />
@@ -71,11 +72,8 @@ export function Lens({ isMobile, focus }: { isMobile: boolean; focus?: [number, 
 
   return (
     <EffectComposer multisampling={4} enableNormalPass={false}>
-      {/* Wide in-focus range: the ring stays crisp, only the dust and loose stones fall soft. */}
-      <DepthOfField target={focus ?? [0, 0, 0]} focalLength={0.16} bokehScale={1.6} height={540} />
-      <Bloom luminanceThreshold={1.15} luminanceSmoothing={0.15} intensity={0.65} levels={6} mipmapBlur />
+      <Bloom luminanceThreshold={1.3} luminanceSmoothing={0.1} intensity={0.5} levels={5} mipmapBlur />
       <ToneMapping mode={ToneMappingMode.AGX} />
-      <Noise premultiply blendFunction={BlendFunction.SOFT_LIGHT} opacity={0.32} />
       <Vignette offset={0.28} darkness={0.7} eskil={false} />
     </EffectComposer>
   );
