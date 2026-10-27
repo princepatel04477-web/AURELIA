@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { AdaptiveDpr } from '@react-three/drei';
+import { PerformanceMonitor } from '@react-three/drei';
 import { FilmScene } from './FilmScene';
 import { film } from './filmStore';
 
@@ -11,12 +11,21 @@ type FilmCanvasProps = {
   reducedMotion: boolean;
 };
 
+/** Pixel-ratio range: phones start sharp and only step down if the frame rate does. */
+const DPR_RANGE = { mobile: [1.1, 2] as const, desktop: [1.25, 2] as const };
+
 /**
  * The fixed stage behind the film. It sleeps (frameloop "never") whenever the
  * film section is off screen, so the rest of the page costs nothing.
+ *
+ * Resolution is adaptive rather than fixed low: a frame-rate monitor raises or
+ * lowers the pixel ratio within the device's range, so a fast phone renders at
+ * retina sharpness and a slow one trades a little sharpness for smoothness.
  */
 export default function FilmCanvas({ isMobile, reducedMotion }: FilmCanvasProps) {
   const [active, setActive] = useState(film.get().active);
+  const [lo, hi] = isMobile ? DPR_RANGE.mobile : DPR_RANGE.desktop;
+  const [dpr, setDpr] = useState<number>(isMobile ? 1.6 : 1.75);
 
   useEffect(() => film.subscribe(() => setActive(film.get().active)), []);
 
@@ -30,21 +39,22 @@ export default function FilmCanvas({ isMobile, reducedMotion }: FilmCanvasProps)
     >
       <Canvas
         frameloop={active ? 'always' : 'never'}
-        // Desktop tone-maps in the post stack; mobile has none, so the renderer does it.
-        flat={!isMobile}
-        dpr={isMobile ? 1 : [1, 2]}
+        // Tone mapping happens in the lens (post stack) on every device.
+        flat
+        dpr={dpr}
         resize={{ debounce: 250, scroll: false }}
         camera={{ position: [0, 0.15, 8.6], fov: 32, near: 0.1, far: 60 }}
-        gl={{
-          antialias: !isMobile,
-          alpha: false,
-          powerPreference: 'high-performance',
-        }}
+        gl={{ antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false }}
       >
-        <Suspense fallback={null}>
-          <FilmScene isMobile={isMobile} reducedMotion={reducedMotion} />
-        </Suspense>
-        {isMobile ? null : <AdaptiveDpr pixelated={false} />}
+        <PerformanceMonitor
+          flipflops={4}
+          onChange={({ factor }) => setDpr(Math.round((lo + (hi - lo) * factor) * 20) / 20)}
+          onFallback={() => setDpr(lo)}
+        >
+          <Suspense fallback={null}>
+            <FilmScene isMobile={isMobile} reducedMotion={reducedMotion} />
+          </Suspense>
+        </PerformanceMonitor>
       </Canvas>
     </div>
   );

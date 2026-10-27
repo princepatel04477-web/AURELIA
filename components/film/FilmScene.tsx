@@ -2,14 +2,13 @@
 
 import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing';
-import { ToneMappingMode } from 'postprocessing';
 import * as THREE from 'three';
 import { GoldDust } from './GoldDust';
 import { Sparks } from './Sparks';
 import { StoneMaterial } from './StoneMaterial';
+import { Lens, StudioEnvironment, useBakedEnvironment } from './Studio';
 import { beatWeight, BEATS, film, smoothstep } from './filmStore';
-import { METALS, useLooseDiamond, useRingGeometry, useStudioEnvironment } from './useRingAsset';
+import { getMicroSurface, METALS, useLooseDiamond, useRingGeometry } from './useRingAsset';
 
 type Shot = {
   at: number;
@@ -79,8 +78,9 @@ type FilmSceneProps = {
 };
 
 export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
-  const { band, diamonds, stoneY } = useRingGeometry();
-  const envMap = useStudioEnvironment();
+  const { band, diamonds, ao, stoneY } = useRingGeometry();
+  const envMap = useBakedEnvironment();
+  const micro = useMemo(() => getMicroSurface(), []);
   const shots = useShots(stoneY);
 
   const scene = useThree((s) => s.scene);
@@ -96,14 +96,13 @@ export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
   const idleYaw = useRef(0);
 
   useEffect(() => {
-    scene.environment = envMap;
     scene.background = new THREE.Color('#0a0907');
-    scene.environmentIntensity = 1;
-    film.markLoaded();
-    return () => {
-      scene.environment = null;
-    };
-  }, [scene, envMap]);
+  }, [scene]);
+
+  // The curtain lifts once the studio has been baked into the environment.
+  useEffect(() => {
+    if (envMap) film.markLoaded();
+  }, [envMap]);
 
   useFrame((state, delta) => {
     const f = film.get();
@@ -162,61 +161,62 @@ export function FilmScene({ isMobile, reducedMotion }: FilmSceneProps) {
     // --- THE HAND: the studio turns, so a highlight polishes along the band ---
     const polish = beatWeight('hand', f.progress);
     scene.environmentRotation.y = f.progress * Math.PI * 1.4 + polish * Math.PI * 0.6;
-    scene.environmentIntensity = 0.9 + polish * 0.5 + beatWeight('stone', f.progress) * 0.25;
+    scene.environmentIntensity = 1 + polish * 0.45 + beatWeight('stone', f.progress) * 0.2;
   });
 
   return (
     <>
       <group ref={ringGroup}>
         <mesh geometry={band}>
-          {isMobile ? (
-            // Phones: one specular lobe instead of two (no clearcoat pass).
-            <meshStandardMaterial
-              ref={bandMaterial}
-              color={METALS.yellow.color}
-              metalness={1}
-              roughness={METALS.yellow.roughness}
-              envMapIntensity={1.7}
-              transparent
-              opacity={0}
-            />
-          ) : (
-            <meshPhysicalMaterial
-              ref={bandMaterial}
-              color={METALS.yellow.color}
-              metalness={1}
-              roughness={METALS.yellow.roughness}
-              clearcoat={0.6}
-              clearcoatRoughness={0.08}
-              envMapIntensity={1.6}
-              transparent
-              opacity={0}
-            />
-          )}
+          {/*
+            Gold is a bare metal — no clearcoat (that is what made it read as plastic CAD).
+            The baked occlusion darkens the gallery and under the halo; the micro-surface
+            breaks the reflections up the way hand-polished metal does.
+          */}
+          <meshStandardMaterial
+            ref={bandMaterial}
+            color={METALS.yellow.color}
+            metalness={1}
+            roughness={METALS.yellow.roughness}
+            roughnessMap={micro}
+            bumpMap={micro}
+            bumpScale={0.0006}
+            aoMap={ao}
+            aoMapIntensity={0.85}
+            envMapIntensity={1.35}
+            transparent
+            opacity={0}
+          />
         </mesh>
-        <mesh ref={diamondMesh} geometry={diamonds} visible={false}>
-          <StoneMaterial envMap={envMap} lite={isMobile} />
-        </mesh>
+        {envMap ? (
+          <mesh ref={diamondMesh} geometry={diamonds} visible={false}>
+            <StoneMaterial envMap={envMap} lite={isMobile} />
+          </mesh>
+        ) : null}
         <GoldDust geometries={[band, diamonds]} count={isMobile ? 3200 : 11000} />
       </group>
 
-      <Sparks count={isMobile ? 180 : 700} />
-      <LooseDiamonds envMap={envMap} count={isMobile ? 4 : 9} lite={isMobile} />
-      <AmbientDust count={isMobile ? 160 : 520} />
+      <Sparks count={isMobile ? 220 : 700} />
+      {envMap ? <LooseDiamonds envMap={envMap} count={isMobile ? 7 : 11} portrait={isMobile} stoneY={stoneY} lite={isMobile} /> : null}
+      <AmbientDust count={isMobile ? 200 : 520} />
 
-      {isMobile ? null : (
-        <EffectComposer multisampling={0} enableNormalPass={false}>
-          <Bloom luminanceThreshold={0.95} intensity={0.9} levels={8} mipmapBlur />
-          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-          <Vignette offset={0.28} darkness={0.72} eskil={false} />
-        </EffectComposer>
-      )}
+      <StudioEnvironment isMobile={isMobile} />
+      <Lens isMobile={isMobile} />
     </>
   );
 }
 
 /** Loose stones that drift in around THE STONE, then leave. */
-function LooseDiamonds({ envMap, count, lite }: { envMap: THREE.Texture; count: number; lite: boolean }) {
+type LooseDiamondsProps = {
+  envMap: THREE.Texture;
+  count: number;
+  /** Phones: a tall, narrow column in front of the stone instead of a wide ring around it. */
+  portrait: boolean;
+  stoneY: number;
+  lite: boolean;
+};
+
+function LooseDiamonds({ envMap, count, portrait, stoneY, lite }: LooseDiamondsProps) {
   const geometry = useLooseDiamond();
   const group = useRef<THREE.Group>(null);
 
@@ -224,14 +224,25 @@ function LooseDiamonds({ envMap, count, lite }: { envMap: THREE.Texture; count: 
     () =>
       Array.from({ length: count }, (_, i) => {
         const a = (i / count) * Math.PI * 2;
+        const base = portrait
+          ? new THREE.Vector3(
+              Math.cos(a * 1.7) * 0.75,
+              stoneY - 1.9 + (i / Math.max(1, count - 1)) * 3.6,
+              0.6 + Math.sin(a) * 0.9
+            )
+          : new THREE.Vector3(
+              Math.cos(a) * (2.1 + (i % 3) * 0.65),
+              stoneY - 0.5 + Math.sin(a * 2) * 1.3,
+              Math.sin(a) * 1.5 - 0.4
+            );
         return {
-          base: new THREE.Vector3(Math.cos(a) * (2.2 + (i % 3) * 0.7), 0.6 + Math.sin(a * 2) * 1.2, Math.sin(a) * 1.6 - 0.6),
-          size: 0.16 + ((i * 37) % 10) / 60,
+          base,
+          size: (portrait ? 0.13 : 0.16) + ((i * 37) % 10) / (portrait ? 75 : 60),
           spin: 0.2 + ((i * 13) % 7) / 10,
           phase: i * 1.7,
         };
       }),
-    [count]
+    [count, portrait, stoneY]
   );
 
   useFrame((state) => {
